@@ -1,0 +1,291 @@
+<?php
+
+namespace Emblaze\Router;
+
+use Emblaze\View\View;
+use Emblaze\Http\Request;
+
+class Route
+{
+    /**
+     * Route container
+     * 
+     * @var array $routes
+     */
+    private static $routes = [];
+
+
+    /**
+     * Middleware
+     * 
+     * @var string $middleware
+     */
+    private static $middleware;
+    
+    /**
+     * Prefix
+     * 
+     * @var string $prefix
+     */
+    private static $prefix;
+
+    /**
+     * Route constructor
+     * 
+     * @return void
+     */
+    private function __construct() {}
+
+    
+    /**
+     * Add route
+     * 
+     * @param string methods
+     * @param string $uri
+     * @param object|callback $callback
+     */
+    private static function add($methods, $uri, $callback)
+    {
+        $uri = trim($uri,'/');
+
+        $uri = rtrim(static::$prefix . '/' . $uri, '/');
+
+        $uri = $uri?:'/';
+
+        foreach (explode('|', $methods) as $method) {
+            static::$routes[] = [
+                'uri' => $uri,
+                'callback' => $callback,
+                'method' => $method,
+                'middleware' => static::$middleware,
+            ];
+        }
+    }
+
+    /**
+     * Add new GET route
+     * 
+     * @param string $uri
+     * @param object|callback $callback
+     */
+    public static function get($uri, $callback)
+    {
+        static::add('GET', $uri, $callback);
+    }
+
+    /**
+     * Add new POST route
+     * 
+     * @param string $uri
+     * @param object|callback $callback
+     */
+    public static function post($uri, $callback)
+    {
+        static::add('POST', $uri, $callback);
+    }
+
+    /**
+     * Add new any e.g. GET|POST route
+     * 
+     * @param string $uri
+     * @param object|callback $callback
+     */
+    public static function any($uri, $callback)
+    {
+        static::add('GET|POST', $uri, $callback);
+    }
+
+    /**
+     * Set prefix for routing
+     * 
+     * @param string $prefix
+     * @param callback $callback
+     */
+    public static function prefix($prefix, $callback)
+    {
+        $parent_prefix = static::$prefix;
+
+        static::$prefix .= '/' . trim($prefix,'/');
+
+        if(is_callable($callback)) {
+            call_user_func($callback);
+        } else {
+            throw new \BadFunctionCallException("Please provide valid callback function");
+        }
+
+        static::$prefix = $parent_prefix;
+    }
+
+    /**
+     * Set middleware for routing
+     * 
+     * @param string $middleware
+     * @param callback $callback
+     */
+    public static function middleware($middleware, $callback)
+    {
+        $parent_middleware = static::$middleware;
+
+        static::$middleware .= '|' . trim($middleware,'|');
+
+        if(is_callable($callback)) {
+            call_user_func($callback);
+        } else {
+            throw new \BadFunctionCallException("Please provide valid callback function");
+        }
+
+        static::$middleware = $parent_middleware;
+    }
+
+    /**
+     * Handle the request and match the routes
+     * 
+     * @return mixed
+     */
+    public static function handle()
+    {
+        // this will get the current requested uri e.g. /users/1/edit
+        $uri = Request::url();
+        
+        // manipulate params e.g. /users/{params_id}/edit or /users/{params1}/{params2}/save
+        foreach(static::$routes as $route) {
+            $matched = true;
+            
+            $replace_with = "/(.*?)";
+            
+            // preg_replace will replace the "users/{params_id}/edit" into e.g. "users/(.*?)/edit"
+            $route['uri'] = preg_replace('/\/{(.*?)}/',$replace_with, $route['uri']);
+            
+            // e.g. #^/users/(.*?)/edit$#
+            $route['uri'] = '#^' . $route['uri'] . '$#';
+            
+            // preg_match will find the matched routes
+            if(preg_match($route['uri'], $uri, $matches)) {
+                /**
+                 * $matches will now be e.g. 
+                 * array[
+                 *      0=>"/users/1/edit"
+                 *      1=>"1"
+                 * ]
+                 */
+
+                // Returns the shifted value, or null if array is empty or is not an array. 
+                array_shift($matches);
+
+                $params = array_values($matches);
+                
+                foreach($params as $param) {
+                    if(strpos($param, '/')) {
+                        $matched = false;
+                    }
+                }
+
+                // Check if the $route['method'] is not equal to current client user Request method request.
+                if($route['method'] != Request::method()) {
+                    $matched = false;
+                }
+
+                if($matched == true) {
+                    return static::invoke($route,$params);
+                }
+            }
+        }
+
+        return View::render('errors.404');
+        // die("Route not found.");
+        // throw new \Exception("This ".$uri. " route is not found. You should create a Route for this on /routes folder");
+    }
+
+    /**
+     * Invoke the route
+     * 
+     * @param array $route
+     * @param array $params
+     */
+    public static function invoke($route, $params = [])
+    {
+        /** 
+         * EXECUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
+        */
+        static::executeMiddleware($route);
+        // -----------------------------------------------------------
+
+        $callback = $route['callback'];
+        if(is_callable($callback)) {
+            return call_user_func_array($callback, $params);
+        }
+
+        // use e.g. SiteController@index
+        // like: Route::get('/home',SiteController@index)
+        if(!is_array($callback) && strpos($callback,'@') !== false) {
+            list($className, $method) = explode('@',$callback);
+            
+            $className = "App\Http\Controllers\\".$className;
+            
+            if(class_exists($className)) {
+                $object = new $className();
+                if(method_exists($object, $method)) {
+                    return call_user_func_array([$object, $method], $params);
+                } else {
+                    throw new \ReflectionException("The method ".$method." is not exists at ".$className);    
+                }
+            } else {
+                throw new \ReflectionException("class ".$className." is not found.");
+            }
+        }
+        // OR
+        // use e.g. [SiteController::class, 'method']
+        // like: Route::get('/home',[SiteController::class, 'index'])
+        if(is_array($callback)) {
+            // className is the controller
+            $className = $callback[0];
+            $method = $callback[1];
+
+            if(class_exists($className)) {
+                $object = new $className();
+                if(method_exists($object, $method)) {
+                    return call_user_func_array([$object, $method], $params);
+                } else {
+                    throw new \ReflectionException("The method ".$method." is not exists at ".$className);    
+                }
+            } else {
+                throw new \ReflectionException("class ".$className." is not found.");
+            }
+
+        }
+        
+    }
+
+    /**
+     * Execute middleware
+     * 
+     * @param array $routes
+     */
+    protected static function executeMiddleware($route)
+    {
+        $middlewareNames = explode('|',$route['middleware']);
+        
+        foreach($middlewareNames as $middleware) {
+            if($middleware != '') {
+                $middleware = 'App\Http\Middleware\\'.$middleware;
+                if(class_exists($middleware)) {
+                    $object = new $middleware;
+                    // trigger the handle method from Middleware
+                    call_user_func_array([$object, 'handle'],[]);
+                } else {
+                    throw new \ReflectionException("class ".$middleware." does not exists.");
+                }
+            }
+        }
+    }
+
+    /**
+     * Get all routes
+     * 
+     * @return array
+     */
+    public static function allRoutes()
+    {
+        return static::$routes;
+    }
+}
