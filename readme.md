@@ -4,8 +4,6 @@
 
 > **Note:** This repository contains the core code of the Emblaze framework. If you want to build an application using Emblaze, visit the main [Emblaze repository](https://github.com/emblaze-framework/emblaze).
 
-Emblaze is a web application framework
-
 ## to install emblaze core libraries
 
 `composer require emblaze/framework`
