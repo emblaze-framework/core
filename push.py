@@ -45,10 +45,10 @@ def add_tag():
       # do something with line
         print(line)
 
-    proc = subprocess.Popen(["git", "push", "--tag"], stdout=subprocess.PIPE)
-    for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
+    proc2 = subprocess.Popen(["git", "push", "--tag"], stdout=subprocess.PIPE)
+    for line2 in io.TextIOWrapper(proc2.stdout, encoding="utf-8"):  # or another encoding
       # do something with line
-        print(line)
+        print(line2)
     exit()
   else:
     pass
@@ -59,17 +59,17 @@ if __name__ == "__main__":
     commit_message = str(input("Input Commit Message?: "))
     # git status
     git_status()
-    
+
     # git add
     git_add()
 
     # git commit
     git_commit(commit_message)
 
-    # Add Tag
-    add_tag()
-
     # Push
     git_push()
+
+    # Add Tag
+    add_tag()
     
 
