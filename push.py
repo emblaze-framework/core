@@ -36,7 +36,9 @@ def git_push():
         # git commit -S -m "update homepage"
 
 def add_tag():
-  yesno = str(input("Add tag?[Yes/No]: "))
+  print("")
+  print("")
+  yesno = str(input("Do you want to add Tag?[Yes/No]: "))
   if yesno.lower() == "y" or yesno.lower() == "yes":
     tagVersion = str(input("input tag e.g. 1.0.1: "))
 
