@@ -174,3 +174,14 @@ if(! function_exists('auth')) {
         return Emblaze\Database\Database::table($table)->where('id', '=', $auth)->first();
     }
 }
+
+/**
+ * Csrf Token Generator
+ * 
+ * @return mixed
+ */
+if(! function_exists('csrf')) {
+    function csrf() {
+        return Emblaze\Session\CsrfToken::get();
+    }
+}
