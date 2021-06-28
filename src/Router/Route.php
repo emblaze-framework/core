@@ -205,6 +205,11 @@ class Route
     public static function invoke($route, $params = [])
     {
         /** 
+         * EXECUTE GLOBAL MIDDLEWARE FIRST TRIGGERING THE other routes middleware
+        */
+        static::executeGlobalMiddleware();
+
+        /** 
          * EXECUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
         */
         static::executeMiddleware($route);
@@ -272,9 +277,34 @@ class Route
                     $object = new $middleware;
                     // trigger the handle method from Middleware
                     call_user_func_array([$object, 'handle'],[]);
+                    
                 } else {
                     throw new \ReflectionException("class ".$middleware." does not exists.");
                 }
+            }
+        }
+    }
+
+    /**
+     * This will execute Global Middleware stack from \App\Http\HttpCore;
+     *
+     * @return void
+     */
+    protected static function executeGlobalMiddleware()
+    {
+        // Get list of global middleware stack from \App\Http\HttpCore;
+        $middlewares = \App\Http\HttpCore::$globalMiddleware;
+
+        // Loop through middleware class
+        foreach($middlewares as $middleware) {
+            // if that class exists
+            if(class_exists($middleware)) {
+                // create new instance of that class
+                $object = new $middleware;
+                // trigger the handle method from Middleware
+                call_user_func_array([$object, 'handle'],[]);
+            } else {
+                throw new \ReflectionException("class ".$middleware." does not exists.");
             }
         }
     }
