@@ -37,5 +37,5 @@ class Response
         
         echo $data;
     }
-
+    
 }

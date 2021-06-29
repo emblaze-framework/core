@@ -4,6 +4,7 @@ namespace Emblaze\Router;
 
 use Emblaze\View\View;
 use Emblaze\Http\Request;
+use Emblaze\Middleware\MiddlewareStack;
 
 class Route
 {
@@ -205,15 +206,19 @@ class Route
     public static function invoke($route, $params = [])
     {
         /** 
-         * EXECUTE GLOBAL MIDDLEWARE FIRST TRIGGERING THE other routes middleware
+         * EXECUTE GLOBAL MIDDLEWARE FIRST BEFORE TRIGGERING THE other routes middleware
         */
-        static::executeGlobalMiddleware();
+        // static::executeGlobalMiddleware_v2();
+        $request = static::executeMiddlewareStack(\App\Http\HttpCore::$globalMiddleware);
 
         /** 
-         * EXECUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
+         * EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
         */
         static::executeMiddleware($route);
         // -----------------------------------------------------------
+
+        // add the $request to params
+        $params[] = $request;
 
         $callback = $route['callback'];
         if(is_callable($callback)) {
@@ -290,23 +295,56 @@ class Route
      *
      * @return void
      */
-    protected static function executeGlobalMiddleware()
+    // protected static function executeGlobalMiddleware()
+    // {
+    //     // Get list of global middleware stack from \App\Http\HttpCore;
+    //     $middlewares = \App\Http\HttpCore::$globalMiddleware;
+
+    //     // Loop through middleware class
+    //     foreach($middlewares as $middleware) {
+    //         // if that class exists
+    //         if(class_exists($middleware)) {
+    //             // create new instance of that class
+    //             $object = new $middleware;
+    //             // trigger the handle method from Middleware
+    //             call_user_func_array([$object, 'handle'],[]);
+    //         } else {
+    //             throw new \ReflectionException("class ".$middleware." does not exists.");
+    //         }
+    //     }
+    // }
+
+    /**
+     * This will execute Global Middleware stack from \App\Http\HttpCore;
+     *
+     * @return void
+     */
+    protected static function executeMiddlewareStack($middlewares = [])
     {
         // Get list of global middleware stack from \App\Http\HttpCore;
-        $middlewares = \App\Http\HttpCore::$globalMiddleware;
+        // $middlewares = \App\Http\HttpCore::$globalMiddleware;
 
-        // Loop through middleware class
+        // Reverse the array of middlewares so that it will run from first to end.
+        $middlewares = array_reverse($middlewares, true);
+        
+        // new intance ofMiddlewareStack
+        $mwStack = new MiddlewareStack();
+
+        // Loop through middleware classes and add it to MiddlewareStack
         foreach($middlewares as $middleware) {
             // if that class exists
             if(class_exists($middleware)) {
-                // create new instance of that class
-                $object = new $middleware;
-                // trigger the handle method from Middleware
-                call_user_func_array([$object, 'handle'],[]);
+                // add new middleware stack
+                $mwStack->add(new $middleware());
             } else {
                 throw new \ReflectionException("class ".$middleware." does not exists.");
             }
         }
+        
+        // handle middleware stack and create the new instance of Request
+        $request = $mwStack->handle(new Request());
+
+        return $request;
     }
 
     /**

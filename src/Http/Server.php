@@ -21,6 +21,12 @@ class Server
         return isset($_SERVER[$key]);
     }
 
+    public static function set($key,$value)
+    {
+        $_SERVER[$key] = $value;
+        return static::get($key);
+    }
+
     /**
      * Get the value from server by the given key
      * 

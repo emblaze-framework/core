@@ -4,6 +4,8 @@ namespace Emblaze\Http;
 
 class Request
 {
+    public $code = 200;
+    
     /**
      * Script Name
      * 
@@ -44,7 +46,9 @@ class Request
      * 
      * @return void
      */
-    private function __construct() {}
+    public function __construct() {
+        echo "Request has been called";
+    }
 
     /**
      * Handle the Request
@@ -53,6 +57,7 @@ class Request
      */
     public static function handle()
     {
+        // "SCRIPT_NAME" => "/public/index.php"
         static::$script_name = str_replace('\\','',dirname(Server::get('SCRIPT_NAME')));
      
         static::setBaseUrl();
@@ -85,7 +90,7 @@ class Request
      */
     private static function setUrl()
     {
-         // e.g. "REQUEST_URI" => "/public/index.php" or "/public/index.php?id=1&name=John"
+        // e.g. "REQUEST_URI" => "/public/index.php" or "/public/index.php?id=1&name=John"
         $request_uri = urldecode(Server::get('REQUEST_URI'));
 
         // e.g static::$script_name = "/public"
@@ -214,7 +219,6 @@ class Request
      */
     public static function get($key)
     {
-        // return $_GET[$key] ?? null;
         return static::value($key, $_GET);
     }
 
@@ -226,7 +230,6 @@ class Request
      */
     public static function post($key)
     {
-        // return $_POST[$key] ?? null;
         return static::value($key, $_POST);
     }
 
