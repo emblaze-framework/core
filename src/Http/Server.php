@@ -5,7 +5,7 @@ namespace Emblaze\Http;
 class Server
 {
     /**
-     * App constructor.
+     * Server constructor.
      * 
      * @return void
      */

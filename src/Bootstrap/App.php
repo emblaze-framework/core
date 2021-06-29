@@ -12,6 +12,8 @@ use Emblaze\Session\Session;
 use Emblaze\Database\Database;
 use Emblaze\Exceptions\Whoops;
 
+use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
+
 class App 
 {
     /**
@@ -27,16 +29,16 @@ class App
      * @return void
      */
     public static function run()
-    {
+    {  
         // Register Whoops
         Whoops::handle();
         
         // Start Session
         Session::start();
-
-        // Handle the request
-        Request::handle();
-
+    
+        // Handle the request & Injection the SymfonyRequest createFromGlobals
+        Request::handle(SymfonyRequest::createFromGlobals());
+        
         // Require all files from routes directory
         File::require_directory('routes');
 
@@ -45,6 +47,9 @@ class App
 
         Response::output($data);
 
+
+        // Cookie::set('nameOfCookie2222', 'TheValueOfCookie2222');
+        
         // Set session
         // Session::set('name','Rey Mark');
 

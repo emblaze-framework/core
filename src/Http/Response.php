@@ -9,7 +9,9 @@ class Response
      * 
      * @return void
      */
-    private function __construct() {}
+    private function __construct() {
+        
+    }
 
     /**
      * Return json response

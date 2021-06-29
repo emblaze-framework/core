@@ -2,10 +2,17 @@
 
 namespace Emblaze\Http;
 
+use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
+
 class Request
 {
-    public $code = 200;
-    
+    /**
+     * Hold the SymfonyRequest
+     *
+     * @var $request;
+     */
+    public static $request;
+
     /**
      * Script Name
      * 
@@ -47,7 +54,10 @@ class Request
      * @return void
      */
     public function __construct() {
-        echo "Request has been called";
+        
+    //    static::$request = SymfonyRequest::createFromGlobals();
+    //    static::$request->headers->set('cookie',"PHPSESSID=ntctikmsh5n78g3b2j7sgisqvr;TEST=123");
+    //    dump(static::$request->server->get("SCRIPT_NAME"));
     }
 
     /**
@@ -55,13 +65,17 @@ class Request
      * 
      * @return void
      */
-    public static function handle()
-    {
+    public static function handle(SymfonyRequest $request)
+    {   
+        // dump($request);
+        
         // "SCRIPT_NAME" => "/public/index.php"
-        static::$script_name = str_replace('\\','',dirname(Server::get('SCRIPT_NAME')));
+        // static::$script_name = str_replace('\\','',dirname(Server::get('SCRIPT_NAME')));
+        static::$script_name = str_replace('\\','',dirname($request->server->get("SCRIPT_NAME")));
      
         static::setBaseUrl();
         static::setUrl();
+
     }
 
     /**
