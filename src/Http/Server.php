@@ -9,7 +9,9 @@ class Server
      * 
      * @return void
      */
-    private function __construct() {}
+    public function __construct() {
+        
+    }
 
     /**
      * Check that server has the key

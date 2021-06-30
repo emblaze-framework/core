@@ -14,6 +14,13 @@ class Request
     public static $request;
 
     /**
+     * ServerBag
+     *
+     * @var $server \Symfony\Component\HttpFoundation\ServerBag;
+     */
+    // public static $server;
+
+    /**
      * Script Name
      * 
      * @var $script_name
@@ -47,17 +54,39 @@ class Request
      * @var $url
      */
     private static $query_string;
-    
+
+    /**
+     * Symfony\Component\HttpFoundation\Request Properties
+     */
+    public $attributes;
+    public $post;
+    public $query;
+    public $server;
+    public $files;
+    public $cookies;
+    public $headers;
+
     /**
      * Request constructor
-     * 
-     * @return void
+     *
+     * @param mixed $request
      */
     public function __construct() {
         
-    //    static::$request = SymfonyRequest::createFromGlobals();
-    //    static::$request->headers->set('cookie',"PHPSESSID=ntctikmsh5n78g3b2j7sgisqvr;TEST=123");
-    //    dump(static::$request->server->get("SCRIPT_NAME"));
+        // Assign the self::$request into SymfonyRequest::createFromGlobals();
+        self::$request = SymfonyRequest::createFromGlobals();
+
+        /**
+         * Assigned Symfony\Component\HttpFoundation\Request Properties
+         */
+        $this->attributes = self::$request->attributes;
+        $this->post = self::$request->cookies;
+        $this->query = self::$request->query;
+        $this->server = self::$request->server;
+        $this->files = self::$request->files;
+        $this->cookies = self::$request->cookies;
+        $this->headers = self::$request->headers;
+
     }
 
     /**
@@ -65,16 +94,15 @@ class Request
      * 
      * @return void
      */
-    public static function handle(SymfonyRequest $request)
+    public static function handle()
     {   
-        // dump($request);
-        
         // "SCRIPT_NAME" => "/public/index.php"
-        // static::$script_name = str_replace('\\','',dirname(Server::get('SCRIPT_NAME')));
-        static::$script_name = str_replace('\\','',dirname($request->server->get("SCRIPT_NAME")));
+        static::$script_name = str_replace('\\','',dirname(Server::get('SCRIPT_NAME')));
      
         static::setBaseUrl();
         static::setUrl();
+
+        return self::$request;
 
     }
 

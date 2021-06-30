@@ -48,9 +48,14 @@ if(! function_exists('view')) {
  * @param string $key
  * @param mixed
  */
+// if(! function_exists('request')) {
+//     function request($key) {
+//         return Emblaze\Http\Request::value($key);
+//     }
+// }
 if(! function_exists('request')) {
-    function request($key) {
-        return Emblaze\Http\Request::value($key);
+    function request() {
+        return \Emblaze\Bootstrap\App::$request;
     }
 }
 

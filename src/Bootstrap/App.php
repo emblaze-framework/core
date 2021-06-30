@@ -12,99 +12,90 @@ use Emblaze\Session\Session;
 use Emblaze\Database\Database;
 use Emblaze\Exceptions\Whoops;
 
-use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
-
 class App 
 {
+    /**
+     * Instance of the App
+     * 
+     * @var App
+     */
+    public static App $app;
+
+    /**
+     * Request
+     *
+     * @var Request $request
+     */
+    public Request $request;
+
+    /**
+     * Response
+     * 
+     * @var Response $response
+     */
+    private Response $response;
+
+    /**
+     * Route
+     *
+     * @var Route $request
+     */
+    public Route $route;
+
     /**
      * App constructor
      * 
      * @return void
      */
-    private function __construct() {}
+    public function __construct() {
+
+        // load dotenv nad inject the App ROOT path.
+        Dotenv::handle(ROOT);
+       
+        // $app var is now App intance
+        self::$app = $this;
+
+         // Register Whoops
+         Whoops::handle();
+        
+         // Start Session
+         Session::start();
+
+        // Instantiate new Request
+        $this->request = new Request();
+
+        // Instantiate new Response
+        $this->response = new Response();
+
+        // Instantiate new Route & inject the Request, Response
+        $this->route = new Route($this->request, $this->response);
+        
+    }
 
     /**
      * Run the application
      * 
      * @return void
      */
-    public static function run()
+    public function run()
     {  
-        // Register Whoops
-        Whoops::handle();
-        
-        // Start Session
-        Session::start();
-    
-        // Handle the request & Injection the SymfonyRequest createFromGlobals
-        Request::handle(SymfonyRequest::createFromGlobals());
+        // Handle Request
+        $this->request::handle();
         
         // Require all files from routes directory
         File::require_directory('routes');
 
         // Handle Routers
-        $data = Route::handle();
+        $data =  $this->route::handle();
 
-        Response::output($data);
+        // Outpute Response
+        $this->response::output($data);
 
+    }
 
-        // Cookie::set('nameOfCookie2222', 'TheValueOfCookie2222');
+    // Bind Some Custom Class Here?
+    public function bind()
+    {
         
-        // Set session
-        // Session::set('name','Rey Mark');
-
-        // dump($_SESSION);
-        
-        // Session::remove('name');
-
-        // dump($_SESSION);
-        
-        // dump(Session::all());
-        
-        // Session::destroy();
-
-        // dump(Session::all());
-
-        // echo "session flash: ".Session::flash('name');
-
-        // dump(Session::all());
-        // Cookie::set('nameOfCookie', 'TheValueOfCookie');
-        // dump(Cookie::all());
-        // Cookie::remove('language');
-        // dump(Cookie::all());
-        // throw new \Exception(message: "Test Error");
-        // dump(Cookie::destroy());
-        // dump(Server::path_info('https://example.com'));
-        // dump(Server::all());
-        
-        // dump(Request::baseUrl());
-
-        // dump(Request::baseUrl());
-        // dump(Request::url());
-        // dump(Request::query_string());
-        // dump(Request::full_url());
-
-        // dump(Request::method());
-        // dump(Request::isPost());
-        // dump(Request::isGet());
-        // dump(Request::getBody());
-    
-        // dump(Request::get('name'));
-        // dump(Request::post('name'));
-        // dump(Request::all());
-       
-        // dump(Request::getBody());
-
-        // echo File::path('routes/web.php');
-        
-        // File::require_file('routes/web.php');
-        // dump(File::require_directory('routes'));
-        
-        
-        // dump(Route::allRoutes());
-        // dump(Route::handle());
-        // Route::handle();
-        
-        // $db = Database::instance();
     }
 }

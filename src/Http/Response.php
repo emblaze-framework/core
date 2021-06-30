@@ -9,7 +9,7 @@ class Response
      * 
      * @return void
      */
-    private function __construct() {
+    public function __construct() {
         
     }
 

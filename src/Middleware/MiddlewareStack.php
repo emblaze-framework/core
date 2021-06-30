@@ -2,7 +2,6 @@
 
 namespace Emblaze\Middleware;
 
-use Closure;
 use Emblaze\Http\Request;
 
 class MiddlewareStack
@@ -31,25 +30,24 @@ class MiddlewareStack
     /**
      * Add new middleware stack
      *
-     * @param Middleware $middleware
+     * @param Middleware $newCustomMiddleware
      * @return void
      */
-    public function add(Middleware $middleware)
+    public function add(Middleware $newCustomMiddleware)
     {
         $next = $this->start;
 
         // replace the start into a new middleware
-        $this->start = function(Request $request) use($middleware, $next) {
+        $this->start = function(Request $request) use($newCustomMiddleware, $next) {
 
             // __invoke() the new middleware and pass the args $request, Closure $next
-            return $middleware($request, $next);
+            return $newCustomMiddleware($request, $next);
         };
     }
 
     /**
      * Handle the Middleware Stack
      *
-     * @param Request $request
      * @return void
      */
     public function handle(Request $request)

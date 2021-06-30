@@ -4,6 +4,7 @@ namespace Emblaze\Router;
 
 use Emblaze\View\View;
 use Emblaze\Http\Request;
+use Emblaze\Http\Response;
 use Emblaze\Middleware\MiddlewareStack;
 
 class Route
@@ -29,13 +30,30 @@ class Route
      * @var string $prefix
      */
     private static $prefix;
+    
+    /**
+     * Request
+     * 
+     * @var Request $request
+     */
+    private static Request $request;
+
+    /**
+     * Response
+     * 
+     * @var Response $response
+     */
+    private static Response $response;
 
     /**
      * Route constructor
      * 
      * @return void
      */
-    private function __construct() {}
+    public function __construct(Request $request, Response $response) {
+        self::$request = $request;
+        self::$response = $response;
+    }
 
     
     /**
@@ -341,8 +359,8 @@ class Route
             }
         }
         
-        // handle middleware stack and create the new instance of Request
-        $request = $mwStack->handle(new Request());
+        // handle middleware stack and and inject the users static::$request
+        $request = $mwStack->handle(static::$request);
 
         return $request;
     }
