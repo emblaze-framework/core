@@ -53,15 +53,15 @@ class App
         // Handle/Load dotenv
         // Inject the App ROOT path.
         Dotenv::handle(ROOT);
+
+        // Register Whoops
+        env('WHOOPS_ENABLED') ? Whoops::handle() : null;
        
+        // Start Session
+        Session::start();
+
         // $app var is now App intance
         self::$app = $this;
-
-         // Register Whoops
-         Whoops::handle();
-        
-         // Start Session
-         Session::start();
 
         // Instantiate new Request
         $this->request = new Request();
@@ -81,16 +81,30 @@ class App
      */
     public function run()
     {  
-        // Handle Request
+        /**
+         * Handle request
+         */
         $this->request::handle();
         
-        // Require all files from routes directory
+        /**
+         * Require all files from routes directory
+         * 
+         * This will add all web.php get, post routes
+         * and api routes.
+         */
         File::require_directory('routes');
 
-        // Handle Routers
-        $data =  $this->route::handle();
+        /**
+         * Handle Routers
+         * 
+         * $@return mixed $data 
+         */
+        $data = $this->route::handle();
 
-        // Outpute Response
+       
+        /**
+         * Send the response to user
+         */
         $this->response::output($data);
 
     }

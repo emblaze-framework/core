@@ -18,11 +18,13 @@ class Route
 
 
     /**
-     * Middleware
+     * Route Middleware
+     * 
+     * e.g. Route::middleware('Admin|Owner', function() {})
      * 
      * @var string $middleware
      */
-    private static $middleware;
+    private static $routeMiddlewares;
     
     /**
      * Prefix
@@ -76,7 +78,7 @@ class Route
                 'uri' => $uri,
                 'callback' => $callback,
                 'method' => $method,
-                'middleware' => static::$middleware,
+                'middleware' => static::$routeMiddlewares,
             ];
         }
     }
@@ -143,9 +145,9 @@ class Route
      */
     public static function middleware($middleware, $callback)
     {
-        $parent_middleware = static::$middleware;
+        $parent_middleware = static::$routeMiddlewares;
 
-        static::$middleware .= '|' . trim($middleware,'|');
+        static::$routeMiddlewares .= '|' . trim($middleware,'|');
 
         if(is_callable($callback)) {
             call_user_func($callback);
@@ -153,7 +155,7 @@ class Route
             throw new \BadFunctionCallException("Please provide valid callback function");
         }
 
-        static::$middleware = $parent_middleware;
+        static::$routeMiddlewares = $parent_middleware;
     }
 
     /**
@@ -223,19 +225,20 @@ class Route
      */
     public static function invoke($route, $params = [])
     {
+        
         /** 
          * EXECUTE GLOBAL MIDDLEWARE FIRST BEFORE TRIGGERING THE other routes middleware
         */
         // static::executeGlobalMiddleware_v2();
-        $request = static::executeMiddlewareStack(\App\Http\HttpCore::$globalMiddleware);
+        $request = static::executeMiddlewareStack(\App\Http\HttpCore::$globalMiddleware, static::$request);
 
         /** 
          * EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
         */
-        static::executeMiddleware($route);
+        $request =  static::executeRouteMiddleware($route, $request);
         // -----------------------------------------------------------
 
-        // add the $request to params
+        // Add the $request to params
         $params[] = $request;
 
         $callback = $route['callback'];
@@ -261,6 +264,7 @@ class Route
                 throw new \ReflectionException("class ".$className." is not found.");
             }
         }
+
         // OR
         // use e.g. [SiteController::class, 'method']
         // like: Route::get('/home',[SiteController::class, 'index'])
@@ -283,30 +287,64 @@ class Route
         }
         
     }
-
+    
     /**
-     * Execute middleware
+     * Execute routes middleware
      * 
+     * @param Request $request
      * @param array $routes
      */
-    protected static function executeMiddleware($route)
+    protected static function executeRouteMiddleware($route = [], Request $request = null)
     {
         $middlewareNames = explode('|',$route['middleware']);
+
+        $newMiddlewareStack = [];
         
         foreach($middlewareNames as $middleware) {
             if($middleware != '') {
                 $middleware = 'App\Http\Middleware\\'.$middleware;
                 if(class_exists($middleware)) {
-                    $object = new $middleware;
+                    // $object = new $middleware;
+
+                    $newMiddlewareStack[] = $middleware;
                     // trigger the handle method from Middleware
-                    call_user_func_array([$object, 'handle'],[]);
+                    // call_user_func_array([$object, 'handle'],[]);
                     
                 } else {
                     throw new \ReflectionException("class ".$middleware." does not exists.");
                 }
             }
         }
+
+        // This will return a new request from custom routes middlewares. e.g. Admin, Owner Middlewares.
+        $request = static::executeMiddlewareStack($newMiddlewareStack, $request);
+        return $request;
+        
     }
+
+    /**
+     * Execute middleware
+     * 
+     * @param array $routes
+     */
+    // protected static function executeMiddleware($route)
+    // {
+    //     $middlewareNames = explode('|',$route['middleware']);
+        
+    //     foreach($middlewareNames as $middleware) {
+    //         if($middleware != '') {
+    //             $middleware = 'App\Http\Middleware\\'.$middleware;
+    //             if(class_exists($middleware)) {
+    //                 $object = new $middleware;
+    //                 // trigger the handle method from Middleware
+    //                 call_user_func_array([$object, 'handle'],[]);
+                    
+    //             } else {
+    //                 throw new \ReflectionException("class ".$middleware." does not exists.");
+    //             }
+    //         }
+    //     }
+    // }
 
     /**
      * This will execute Global Middleware stack from \App\Http\HttpCore;
@@ -332,12 +370,16 @@ class Route
     //     }
     // }
 
-    /**
-     * This will execute Global Middleware stack from \App\Http\HttpCore;
-     *
-     * @return void
-     */
-    protected static function executeMiddlewareStack($middlewares = [])
+   
+     /**
+      * This will execute Global Middleware stack from \App\Http\HttpCore;
+      * and can be used to execute custom routes middlewares
+      *
+      * @param array $middlewares
+      * @param Request $request
+      * @return mixed
+      */
+    protected static function executeMiddlewareStack($middlewares = [], Request $request = null)
     {
         // Get list of global middleware stack from \App\Http\HttpCore;
         // $middlewares = \App\Http\HttpCore::$globalMiddleware;
@@ -360,7 +402,7 @@ class Route
         }
         
         // handle middleware stack and and inject the users static::$request
-        $request = $mwStack->handle(static::$request);
+        $request = $mwStack->handle($request);
 
         return $request;
     }

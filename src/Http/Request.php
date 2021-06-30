@@ -57,6 +57,7 @@ class Request
 
     /**
      * Symfony\Component\HttpFoundation\Request Properties
+     * Docs: https://symfony.com/doc/current/components/http_foundation.html
      */
     public $attributes;
     public $post;
@@ -78,9 +79,10 @@ class Request
 
         /**
          * Assigned Symfony\Component\HttpFoundation\Request Properties
+         * Docs: https://symfony.com/doc/current/components/http_foundation.html
          */
         $this->attributes = self::$request->attributes;
-        $this->post = self::$request->cookies;
+        $this->post = self::$request->request;
         $this->query = self::$request->query;
         $this->server = self::$request->server;
         $this->files = self::$request->files;
