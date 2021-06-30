@@ -7,6 +7,7 @@ use Emblaze\Http\Server;
 use Emblaze\Http\Request;
 use Emblaze\Router\Route;
 use Emblaze\Cookie\Cookie;
+use Emblaze\Dotenv\Dotenv;
 use Emblaze\Http\Response;
 use Emblaze\Session\Session;
 use Emblaze\Database\Database;
@@ -49,7 +50,8 @@ class App
      */
     public function __construct() {
 
-        // load dotenv nad inject the App ROOT path.
+        // Handle/Load dotenv
+        // Inject the App ROOT path.
         Dotenv::handle(ROOT);
        
         // $app var is now App intance
