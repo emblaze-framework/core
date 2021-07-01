@@ -1,3 +1,6 @@
+## NOTES: 
+### Don't use this yet, because this is currently on development phase.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/reymarkdivino/website/gh-pages/img/emblaze.png" width="400"></a></p>
 
 ## About Emblaze
