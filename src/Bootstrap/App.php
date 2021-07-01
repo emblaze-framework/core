@@ -36,6 +36,8 @@ class App
      */
     private Response $response;
 
+   
+
     /**
      * Route
      *
@@ -56,6 +58,9 @@ class App
 
         // Register Whoops
         env('WHOOPS_ENABLED') ? Whoops::handle() : null;
+
+        // Instantiate Cookie CsrfToken
+        new \Emblaze\Cookie\CsrfToken();
        
         // Start Session
         Session::start();

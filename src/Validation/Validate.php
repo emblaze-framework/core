@@ -26,7 +26,7 @@ class Validate
      * 
      * @return mixed
      */
-    public static function validate(array $rules, $json)
+    public static function validate(array $rules, $json = true)
     {
         $validator = new Validator;
 
@@ -47,7 +47,9 @@ class Validate
 
         if ($validation->fails()) {
             if($json) {
-                return ['errors' => $errors->firstOfAll()];
+                // return ['errors' => $errors->firstOfAll()];
+                // return ['errors' => $errors->all()];
+                return ['errors' => $errors->toArray()];
             } else {
                 Session::set('errors', $errors);
                 Session::set('old', Request::all());

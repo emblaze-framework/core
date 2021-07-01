@@ -197,7 +197,10 @@ if(! function_exists('csrf')) {
      * @return mixed
      */
     function csrf() {
-        return Emblaze\Session\CsrfToken::get();
+        // session
+        // return Emblaze\Session\CsrfToken::get();
+        // cookie
+        return Emblaze\Cookie\CsrfToken::get();
     }
 }
 

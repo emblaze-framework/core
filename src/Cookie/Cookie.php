@@ -21,7 +21,7 @@ class Cookie
     {
         $expired = time() + (1 * 365 * 24 * 60 * 60);
         
-        setcookie($key, $value, $expired, '/', '', false, true);
+        setcookie($key, $value, $expired, '/', '', false, false);
         
         return $value;;
     }

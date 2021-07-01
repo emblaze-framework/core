@@ -1,6 +1,6 @@
 <?php
 
-namespace Emblaze\Session;
+namespace Emblaze\Cookie;
 
 use Emblaze\Http\Request;
 
@@ -33,7 +33,7 @@ class CsrfToken
     {
         // generate the token
         $token = base64_encode(openssl_random_pseudo_bytes(32));
-        return Session::set(self::$csrf_name, $token);
+        return Cookie::set(self::$csrf_name, $token);
     }
 
     /**
@@ -43,8 +43,8 @@ class CsrfToken
      */
     public static function check()
     {
-        // Check if the session has csrf token
-        if(!Session::has(self::$csrf_name)) {
+        // Check if the Cookie has csrf token
+        if(!Cookie::has(self::$csrf_name)) {
             throw new \Exception("Invalid token, or token expired.");
         }
 
@@ -54,8 +54,8 @@ class CsrfToken
             throw new \Exception("Invalid token, or token expired.");
         }
 
-        // Check if the session csrf token is equal to user client request
-        if(Session::get(self::$csrf_name) === Request::value(self::$csrf_name)) {
+        // Check if the Cookie csrf token is equal to user client request
+        if(Cookie::get(self::$csrf_name) === Request::value(self::$csrf_name)) {
             return true;
         }
 
@@ -71,6 +71,6 @@ class CsrfToken
     {
         return sprintf('<input type="hidden" name="%s" value="%s">', 
                         self::$csrf_name,
-                        self::generate());
+                        Cookie::get(self::$csrf_name));
     }
 }

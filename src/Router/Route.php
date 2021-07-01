@@ -271,17 +271,19 @@ class Route
         if(is_array($callback)) {
             // className is the controller
             $className = $callback[0];
-            $method = $callback[1];
+            $method = $callback[1];           
 
             if(class_exists($className)) {
+               
                 $object = new $className();
                 if(method_exists($object, $method)) {
+                    // Trigger the method from $className and pass $params
                     return call_user_func_array([$object, $method], $params);
                 } else {
                     throw new \ReflectionException("The method ".$method." is not exists at ".$className);    
                 }
             } else {
-                throw new \ReflectionException("class ".$className." is not found.");
+                throw new \ReflectionException("Class ".$className." is not found.");
             }
 
         }
@@ -306,6 +308,7 @@ class Route
                 if(class_exists($middleware)) {
                     // $object = new $middleware;
 
+                    // add the route middleware on newMiddlewareStack
                     $newMiddlewareStack[] = $middleware;
                     // trigger the handle method from Middleware
                     // call_user_func_array([$object, 'handle'],[]);
