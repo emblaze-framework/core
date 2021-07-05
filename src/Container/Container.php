@@ -161,8 +161,8 @@ class Container
     /**
      * prepare the object if singleton or not.
      *
-     * @param [type] $key
-     * @param [type] $object
+     * @param string $key
+     * @param Class|Object $object
      * @return void
      */
     protected function prepareObject($key, $object = null)
