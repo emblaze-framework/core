@@ -12,8 +12,9 @@ use Emblaze\Http\Response;
 use Emblaze\Session\Session;
 use Emblaze\Database\Database;
 use Emblaze\Exceptions\Whoops;
+use Emblaze\Container\Container;
 
-class App 
+class App extends Container
 {
     /**
      * Instance of the App
@@ -36,14 +37,20 @@ class App
      */
     private Response $response;
 
-   
-
     /**
      * Route
      *
      * @var Route $request
      */
     public Route $route;
+
+
+    /**
+     * customClassStack
+     * 
+     * @var array
+     */
+    public static $customClassStack = [];
 
     /**
      * App constructor
@@ -114,9 +121,39 @@ class App
 
     }
 
-    // Bind Some Custom Class Here?
-    public function bind()
+    /**
+     * Bind or Add new custom class that came from outside of the core framework
+     *
+     * @param array $newClassStack
+     * @return void
+     */
+    public function addCustomClass($newClassStack = [])
     {
+        foreach ($newClassStack as $newClass) {
+            $customClassStack[] = $newClass;
+        }
         
+        vd($customClassStack);
     }
+
+    /**
+     * Bind the CLASS/OBJECT into a container
+     *
+     * @return void
+     */
+    // public function bind($key,$value)
+    // {
+    //     $container = \Emblaze\Container\Container::getInstance();
+    //     $container->testdata = "test444";
+        
+    //     $container->bind($key,$value);
+    // }
+
+    // public function resolveObject($key)
+    // {
+    //     $container = \Emblaze\Container\Container::getInstance();
+
+    //     $container->resolve($key, []);
+    // }
+
 }

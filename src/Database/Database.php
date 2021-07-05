@@ -142,7 +142,7 @@ class Database
             try {
                 // This will create a new instance of PDO Object
                 static::$connection = new PDO($dsn, $username, $password, $options);
-                // dump(static::$connection);
+                
             } catch (PDOException $e) {
                 throw new Exception($e->getMessage());
             }
@@ -155,7 +155,9 @@ class Database
      */
     private static function instance()
     {
+        // This will create a new instance of PDO Object
         static::connect();
+        
         $table = static::$table;
         if(!self::$instance) {
             self::$instance = new Database($table);
@@ -212,6 +214,7 @@ class Database
     {
         // get the select(args/params) funciton args/params
         $select = func_get_args();
+        
         // implode the args/params
         $select = implode(', ', $select);
 

@@ -230,3 +230,14 @@ if(! function_exists('vd')) {
         echo "</pre>";
     }
 }
+
+if(! function_exists('app')) {
+    /**
+     * App instance
+     *
+     * @return mixed
+     */
+    function app() {
+        return Emblaze\Bootstrap\App::$app;
+    }
+}
