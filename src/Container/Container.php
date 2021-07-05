@@ -152,13 +152,33 @@ class Container
             return $this->getSingletonInstance($key);
         }
 
-        // Build the class/create a reflection of the class and,
-        // check whether the class has a __constructor(args/dependencies)
-        // if there is a __constructor in the class the we're going to go through all of 
-        // the __constructor args/dependencies and resolved each one of them recurvesively
-        return $this->buildObject($class, $args);
+        
+        $object = $this->buildObject($class, $args);
+
+        return $this->prepareObject($key,$object);
     }
 
+    /**
+     * prepare the object if singleton or not.
+     *
+     * @param [type] $key
+     * @param [type] $object
+     * @return void
+     */
+    protected function prepareObject($key, $object = null)
+    {
+        if($this->isSingleton($key)) {
+            $this->instances[$key] = $object;
+        }
+
+        return $object;
+    }
+
+
+    // Build the class/create a reflection of the class and,
+    // check whether the class has a __constructor(args/dependencies)
+    // if there is a __constructor in the class the we're going to go through all of 
+    // the __constructor args/dependencies and resolved each one of them recurvesively
     /**
      *  Build the class/create a reflection of the class
      *
