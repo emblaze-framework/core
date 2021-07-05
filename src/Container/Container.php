@@ -11,8 +11,13 @@ use ReflectionClass;
  * The way the container works is we are going to allowed to bind objects into our container
  */
 class Container
-{   
-    public static $instance;
+{   /**
+    * instance of Container
+    *
+    * @var static $instance
+    */
+    // public static $instance;
+
      /**
      * Bindings Object
      *
@@ -32,14 +37,14 @@ class Container
      /**
      * Get the instance of the class ($this)Container
      */
-    public static function getInstance()
-    {
-        if(!self::$instance) {
-            self::$instance = new self;
-        }
+    // public static function getInstance()
+    // {
+    //     if(!self::$instance) {
+    //         self::$instance = new self;
+    //     }
 
-        return self::$instance;
-    }
+    //     return self::$instance;
+    // }
 
     /**
      * Set/Bind Object

@@ -13,6 +13,7 @@ use Emblaze\Session\Session;
 use Emblaze\Database\Database;
 use Emblaze\Exceptions\Whoops;
 use Emblaze\Container\Container;
+use Emblaze\ServiceProvider\ServiceProviderInterface;
 
 class App extends Container
 {
@@ -51,6 +52,13 @@ class App extends Container
      * @var array
      */
     public static $customClassStack = [];
+
+    /**
+     * Loaded Providers
+     *
+     * @var array
+     */
+    // protected $loadedProviders = [];
 
     /**
      * App constructor
@@ -121,20 +129,47 @@ class App extends Container
 
     }
 
+    // For example we if have a Routing Service, Event Service, Database Service.
+    /**
+     * Register Provider
+     *
+     * @param ServiceProviderInterface $provider
+     * @return void
+     */
+    // public function registerProvider(ServiceProviderInterface $provider)
+    // {
+    //     if(!$this->providerHasBeenLoaded($provider)) {
+    //         $provider->register($this);
+
+    //         $this->loadedProviders[] = $provider;
+    //     }
+    // }
+
+    /**
+     * Check if the the Service Provider is has been loaded.
+     *
+     * @param ServiceProviderInterface $provider
+     * @return void
+     */
+    // protected function providerHasBeenLoaded(ServiceProviderInterface $provider)
+    // {
+    //     return array_key_exists($provider,$this->loadedProviders);
+    // }
+
     /**
      * Bind or Add new custom class that came from outside of the core framework
      *
      * @param array $newClassStack
      * @return void
      */
-    public function addCustomClass($newClassStack = [])
-    {
-        foreach ($newClassStack as $newClass) {
-            $customClassStack[] = $newClass;
-        }
+    // public function addCustomClass($newClassStack = [])
+    // {
+    //     foreach ($newClassStack as $newClass) {
+    //         $customClassStack[] = $newClass;
+    //     }
         
-        vd($customClassStack);
-    }
+    //     vd($customClassStack);
+    // }
 
     /**
      * Bind the CLASS/OBJECT into a container
