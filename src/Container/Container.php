@@ -5,6 +5,8 @@ namespace Emblaze\Container;
 use ReflectionClass;
 
 /**
+ * Notes: Container are still in development ~
+ * 
  * Notes: The main purpose of Container is to resolved the OBJECT,
  * in other words to Instantiate a CLASS
  * 
