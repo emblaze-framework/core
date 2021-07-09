@@ -1,5 +1,12 @@
 <?php
-
+/*
+ * This file is part of the EmblazeCore library.
+ *
+ * (c) Rey Mark Divino <contact@reymarkdivino.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 namespace Emblaze\Router;
 
 use Emblaze\View\View;
@@ -285,9 +292,9 @@ class Route
             } else {
                 throw new \ReflectionException("Class ".$className." is not found.");
             }
-
         }
         
+      
     }
     
     /**
@@ -415,8 +422,8 @@ class Route
      * 
      * @return array
      */
-    public static function allRoutes()
-    {
-        return static::$routes;
-    }
+    // public static function allRoutes()
+    // {
+    //     return static::$routes;
+    // }
 }

@@ -1,5 +1,12 @@
 <?php
-
+/*
+ * This file is part of the EmblazeCore library.
+ *
+ * (c) Rey Mark Divino <contact@reymarkdivino.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 namespace Emblaze\Bootstrap;
 
 use Emblaze\File\File;
@@ -7,11 +14,9 @@ use Emblaze\Http\Server;
 use Emblaze\Http\Request;
 use Emblaze\Router\Route;
 use Emblaze\Cookie\Cookie;
-use Emblaze\Dotenv\Dotenv;
 use Emblaze\Http\Response;
 use Emblaze\Session\Session;
 use Emblaze\Database\Database;
-use Emblaze\Exceptions\Whoops;
 use Emblaze\Container\Container;
 use Emblaze\ServiceProvider\ServiceProviderInterface;
 
@@ -51,7 +56,7 @@ class App extends Container
      * 
      * @var array
      */
-    public static $customClassStack = [];
+    // public static $customClassStack = [];
 
     /**
      * Loaded Providers
@@ -66,13 +71,6 @@ class App extends Container
      * @return void
      */
     public function __construct() {
-
-        // Handle/Load dotenv
-        // Inject the App ROOT path.
-        Dotenv::handle(ROOT);
-
-        // Register Whoops
-        env('WHOOPS_ENABLED') ? Whoops::handle() : null;
 
         // Instantiate Cookie CsrfToken
         new \Emblaze\Cookie\CsrfToken();
@@ -100,7 +98,7 @@ class App extends Container
      * @return void
      */
     public function run()
-    {  
+    {
         /**
          * Handle request
          */
@@ -143,6 +141,7 @@ class App extends Container
 
     //         $this->loadedProviders[] = $provider;
     //     }
+
     // }
 
     /**

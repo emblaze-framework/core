@@ -1,5 +1,12 @@
 <?php
-
+/*
+ * This file is part of the EmblazeCore library.
+ *
+ * (c) Rey Mark Divino <contact@reymarkdivino.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 /*
 |------------------------------------------------------
 | Helper
@@ -239,5 +246,17 @@ if(! function_exists('app')) {
      */
     function app() {
         return Emblaze\Bootstrap\App::$app;
+    }
+}
+
+if(! function_exists('get_page_load_time')) {
+    /**
+     * Get the page load time
+     *
+     * @return mixed
+     */
+    function get_page_load_time() {
+        $end = number_format((microtime(true) - EMBLAZE_START),2);
+        echo '<br/><br/><br/>This page loaded in ', $end, ' seconds';
     }
 }

@@ -1,296 +1,281 @@
 <?php
-
+/*
+ * This file is part of the EmblazeCore library.
+ *
+ * (c) Rey Mark Divino <contact@reymarkdivino.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 namespace Emblaze\Container;
 
+use Closure;
 use ReflectionClass;
 
-/**
- * Notes: Container are still in development ~
- * 
- * Notes: The main purpose of Container is to resolved the OBJECT,
- * in other words to Instantiate a CLASS
- * 
- * The way the container works is we are going to allowed to bind objects into our container
- */
 class Container
-{   /**
-    * instance of Container
-    *
-    * @var static $instance
-    */
-    // public static $instance;
-
-     /**
-     * Bindings Object
+{
+    /**
+     * This will hold the list of App containers
      *
-     * @var array
+     * @var array $containers
      */
-    protected $bindings = [];
+    protected $containers = [];
 
     /**
-     * OBJECT/CLASS instance holder.
+     * This will hold the list of Instances of Class/Object
      *
      * @var array
      */
     protected $instances = [];
-    
-    public function __construct() {}
-
-     /**
-     * Get the instance of the class ($this)Container
+   
+    /**
+     * Add CLASS|OBJECT to Container
+     *
+     * @param mixed $name
+     * @param mixed $value
+     * @param bool $singleton
+     * @return void
      */
-    // public static function getInstance()
-    // {
-    //     if(!self::$instance) {
-    //         self::$instance = new self;
-    //     }
-
-    //     return self::$instance;
-    // }
+    public function add($name,$value,$singleton)
+    {
+        $this->containers[$name] = [
+            'value' => $value,
+            'singleton' => $singleton
+        ];
+    }
 
     /**
-     * Set/Bind Object
+     * Get the data from containers
      *
-     * @param string $key
-     * @param Class|Object $value
+     * @param mixed $name
+     * @return mixed
+     */
+    public function get($name) {
+        return $this->containers[$name] ?? null;
+    }
+
+    /**
+     * Bind a singleton CLASS|OBJECT
+     *
+     * @param mixed $class
+     * @param mixed $value
+     * @return void
+     */
+    public function singleton($class,$value = null)
+    {
+        $this->bind($class,$value,true);
+    }
+    
+    /**
+     * Bind CLASS|OBJECT to our App
+     *
+     * @param mixed $class
+     * @param mixed $value
      * @param boolean $singleton
      * @return void
      */
-    public function bind($key, $value, $singleton = false)
+    public function bind($class, $value = null, $singleton = false)
     {
-        // set the binding $key to its value, and if singleton or not.
-        $this->bindings[$key] = array(
-            'value' => $value, 
-            'singleton' => $singleton
-        );
+        if($value === null) {
+            $value = $class;
+        }
         
+        // check if class is already exists
+        if($this->get($class)) {
+            throw new \Exception('This '.$class.' is already exists');
+        }
+        
+        $this->add($class, $value, $singleton);
     }
 
     /**
-     * This is like Set/Bind Object, BUT it's singleton OBJECT/CLASS
+     * Check if Singleton
      *
-     * @param string $key
-     * @param Class|Object $value
+     * @param mixed $class
+     * @return boolean
      * @return mixed
      */
-    public function singleton($key, $value)
-    {
-        return $this->bind($key,$value,true);
-    }
+    protected function isSingleton($class) {
+        $class = $this->get($class);
 
-    /**
-     * Get Object
-     *
-     * @param string $key
-     * @return void
-     */
-    public function getBinding($key)
-    {
-       
-        // if the $key are not exists in our bindings array:
-        if(!array_key_exists($key,$this->bindings)){
-            return null;
-        }
-      
-        // return the object with that $key
-        return $this->bindings[$key];
-    }
-
-
-    /**
-     * Check if the class/object is singleton
-     *
-     * @param string $key
-     * @return boolean
-     */
-    public function isSingleton($key)
-    {
-        $binding = $this->getBinding($key);
-
-        if($binding == null) {
+        if($class == null) {
             return false;
         }
 
-        return $binding['singleton'];
-    }
-
-
-    /**
-     * Check if the Object/Class is already instantiated/Resolved.
-     *
-     * @param string $key
-     * @return bool
-     */
-    public function singletonResolved($key)
-    {
-        return array_key_exists($key,$this->instances);
+        return $class['singleton'];
     }
 
     /**
-     * Get Class/Object Singleton Instance from $instances using $key
+     * Check if the singleton resolved
      *
-     * @param string $key
+     * @param mixed $class
      * @return mixed
      */
-    public function getSingletonInstance($key)
+    public function singletonResolved($class)
     {
-        return $this->singletonResolved($key) ? $this->instances[$key] : null;
+        return array_key_exists($class, $this->instances);
     }
 
+    /**
+     * Get singleton Instance
+     *
+     * @param mixed $class
+     * @return mixed
+     */
+    public function getSingletonInstance($class)
+    {
+        return $this->singletonResolved($class) ? $this->instances[$class] : null;
+    }
 
     /**
-     * Instatntiate or Resolved the OBJECT/CLASS
+     * Resolve the CLASS|OBJECT
      *
-     * @param string $key
+     * @param mixed $class
      * @param array $args
-     * @return void
+     * @return mixed
      */
-    public function resolve($key, array $args = [])
+    public function resolve($class, $args = [])
     {
-        $class = $this->getBinding($key);
-        
-        // if the class is null then set the class to the value of $key
-        if($class === null) {
-            $class = $key;
+        if(!$this->get($class)) {
+            throw new \Exception('This '.$class.' is not yet bind, please bind it.');
+        }
+         
+        if($this->isSingleton($class) && $this->singletonResolved($class)) {
+            return $this->getSingletonInstance($class);
         }
 
+        // get the value into containers
+        $value = $this->containers[$class]['value'];
+
         
-        if($this->isSingleton($key) && $this->singletonResolved($key)) {
-            return $this->getSingletonInstance($key);
+        // if the value is Closure/Function then call it.
+        if($value instanceof Closure) {
+            return call_user_func($value, $args);
+        }
+        
+        // Check that the class exists before trying to use it
+        if (!class_exists($value)) {
+            throw new \Exception('This '.$class.' is not exists.');
         }
 
-        
-        $object = $this->buildObject($class, $args);
+        // Create a reflection of the class
+        $reflector = new ReflectionClass($class);
 
-        return $this->prepareObject($key,$object);
+        if(!$reflector->isInstantiable()) {
+            throw new \Exception('Class '.$class.' is not instantiable.');
+        }
+
+        // get the __construct 
+        $constructor = $reflector->getConstructor();
+
+        // if __construct is null
+        if (is_null($constructor)) {
+            return $reflector->newInstanceArgs($args);
+        }
+        
+        // __construct(parameters)
+        $parameters = $constructor->getParameters();
+
+        $dependencies = $this->buildDependencies($parameters) ?? [];
+
+        $instance = $reflector->newInstanceArgs($dependencies);
+        
+        return $this->prepareObject($class,$instance);
+    }
+
+
+    /**
+     * Prepare new instance of CLASS|OBJECT
+     *
+     * @param mixed $class
+     * @param mixed $instance
+     * @return mixed
+     */
+    protected function prepareObject($class, $instance = null)
+    {
+        if($this->isSingleton($class)) {
+            $this->instances[$class] = $instance;
+        }
+
+        return $instance;
     }
 
     /**
-     * prepare the object if singleton or not.
+     * Build the Dependencies
      *
-     * @param string $key
-     * @param Class|Object $object
-     * @return void
+     * @param array $parameters
+     * @return mixed
      */
-    protected function prepareObject($key, $object = null)
+    protected function buildDependencies($parameters)
     {
-        if($this->isSingleton($key)) {
-            $this->instances[$key] = $object;
-        }
 
-        return $object;
-    }
+        $dependencies = [];
+        foreach($parameters as $dependency) {
+            $type = $dependency->getType();
 
-
-    // Build the class/create a reflection of the class and,
-    // check whether the class has a __constructor(args/dependencies)
-    // if there is a __constructor in the class the we're going to go through all of 
-    // the __constructor args/dependencies and resolved each one of them recurvesively
-    /**
-     *  Build the class/create a reflection of the class
-     *
-     * @param string $className
-     * @param array $args
-     * @return void
-     */
-    protected function buildObject($className, array $args = array())
-    {
-        $className = $className['value'];
-
-        // https://www.php.net/manual/en/class.reflectionclass.php
-        $reflectionClass = new ReflectionClass($className);
-
-        // dump($reflectionClass);
-
-        // Check if the $className is not instantiable
-        if(!$reflectionClass->isInstantiable()) {
-            throw new \Exception("Class [$className] is not a resolvable dependency");
-        }
-
-
-        // if the $clasName has a __constructor()
-        if($reflectionClass->getConstructor() !== null) {
-
-            $constructor = $reflectionClass->getConstructor(); //-> $className __constructor(args/dependencies)
-
-            $dependencies = $constructor->getParameters(); //-> args/dependencies
-    
-            $args = $this->buildDependencies($args, $dependencies);
+            $class = $type->getName();
             
-        }
-
-       
-        // dump($args);
-        
-        // dump($reflectionClass);
-
-        $object = $reflectionClass->newInstanceArgs($args);
-
-        
-        return $object;
-    }
-
-    protected function buildDependencies($args, $dependencies = [])
-    {
-        // Loop through OBJECT/CLASS dependencies
-        foreach($dependencies as $dependency) {
-
-            $reflectionParameterType = $dependency->getType();
-
-            // dependency type is array
-            if($reflectionParameterType->getName() === 'array') {
-                array_push($args,$dependency->getDefaultValue());
-                continue;
+            // if the dependency is not a CLASS
+            if(!class_exists($class)) {
+                if ($dependency->isDefaultValueAvailable()) {
+                    $dependencies[] = $dependency->getDefaultValue();
+                    continue;
+                } else {
+                    throw new \Exception("Can not be resolve class dependency {$dependency->name}");
+                }
             }
-
-            // dependency type is string
-            if($reflectionParameterType->getName() === 'string') {
-                array_push($args,$dependency->getDefaultValue());
-                continue;
-            }
-
-             // Check if the dependency is optional then continue;
-            if($dependency->isOptional()) continue;
-           
             
-            // if the dependency is not CLASS
-            if(!class_exists($reflectionParameterType->getName())) {
-                continue;
-            }
+            // if possible we need to resolve the class dependency
+            // first if the check if the class is already bind.
+            
+            if(!$this->get($class)) {
 
-        
+                // throw new \Exception('This '.$class.' is not yet bind, please bind it.');
 
-            //  if the dependency is CLASS
-            if(class_exists($reflectionParameterType->getName())) {
+                // lets try it to create a new instance. OR lets bind it soon in the `future features`.???
+                // $dependencies[] = new $class;
+
+                // check first if the class dependency has a __construct and required parameters.
+                // Create a reflection of the class
+                $reflector = new ReflectionClass($class);
                 
-                // $class = $reflectionParameterType->getName();
+                if(!$reflector->isInstantiable()) {
+                    throw new \Exception('Can not be resolve class dependency because the dependency class '.$class.' is not instantiable.');
+                }
                 
-                // array_push($args, new $class);
-                // $class = $dependency->getClass();
+                // get the __construct 
+                $constructor = $reflector->getConstructor();
 
-                // vd($class->name);
-                // vd($reflectionParameterType->getName());
-                // die();
-                $class = $reflectionParameterType->getName();
+                // if __construct is null
+                if (is_null($constructor)) {
+                    $dependencies[] = $reflector->newInstance();
+                    continue;
+                }
 
-                array_push($args, new $class);
-                continue;
+                $parameters = $constructor->getParameters();
 
+                // check the count of class dependency $parameters count
+                if(count($parameters) > 0) {
+                    throw new \Exception("Can't be resolve dependency class {$class} because it has required parameters.");
+                } else {
+                    
+                    $dependencies[] = $reflector->newInstance();
+                    continue;
+                }
+                
             }
-            
-            // array_push($args, $this->resolve($dependency->name));
-           
-            // if(get_class($this) === $reflectionParameterType->getName()) {
-            //     // array_unshift($args,$this);
-            //     array_unshift($args,$this);
-            //     continue;
-            // }
+        
+            // if the class is already bind/singleton on our container we can resolved that only if the value is Closure/Function then call it.
+            $classBound = $this->get($class);
+            if(($classBound['value'] ?? null) instanceof Closure) {
+                
+                $dependencies[] = call_user_func($classBound['value']);
+            } else {
+                throw new \Exception("Complicated!!! - Can't be resolve dependency class {$class}.");
+            }
 
-            // array_unshift($args,$this->resolve($dependency->name));
-            array_push($args,$this->resolve(ucfirst($dependency->name)));
-            
-        } //end foreach
-
-        return $args;
+        }
+        
+        return $dependencies;
     }
 }

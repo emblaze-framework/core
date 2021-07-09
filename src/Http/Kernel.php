@@ -7,11 +7,9 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Emblaze\ServiceProvider;
+namespace Emblaze\Http;
 
-use Emblaze\Bootstrap\App;
-
-interface ServiceProviderInterface
+class Kernel
 {
-    public function register(App $app);
+    
 }
