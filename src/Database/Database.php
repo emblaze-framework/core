@@ -11,7 +11,6 @@ use Emblaze\Http\Request;
 
 class Database
 {
-    public static $testcount;
     /**
      * Database instance
      * 
@@ -532,15 +531,6 @@ class Database
         $query .= $where != null ? static::$where." " : '';
 
         static::$binding = $where != null ? array_merge(static::$binding, static::$where_binding) : static::$binding;
-
-        static::$testcount += 1;
-
-        if(static::$testcount == 2) {
-            vd($query);
-
-            vd(static::$binding);
-            die();
-        }
         
         $statement = static::prepare($query);
         
