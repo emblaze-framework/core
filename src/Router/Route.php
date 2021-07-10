@@ -247,11 +247,7 @@ class Route
         static::executeRouteMiddleware($route, static::$request);
 
         // -----------------------------------------------------------
-       
-        // Add the $request to params
-        // $params[] = $request;
-        // Add the $response to params
-        // $params[] = static::$response;
+
 
         $callback = $route['callback'];
 
@@ -297,6 +293,10 @@ class Route
                
                 $object = new $className();
                 if(method_exists($object, $method)) {
+
+                    // Before calling the controller method we need to check/build what is the required parameters from that method.
+                    $params = static::buildMethodParameters($className, $method, $params);
+
                     // Trigger the method from $className and pass $params
                     return call_user_func_array([$object, $method], $params);
                 } else {
