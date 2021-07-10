@@ -82,7 +82,7 @@ class Container
         
         // check if class is already exists
         if($this->get($class)) {
-            throw new \Exception('This '.$class.' is already exists');
+            throw new \Exception('Can\'t add again. This class '.$class.' is already exists in containers');
         }
         
         $this->add($class, $value, $singleton);
@@ -150,7 +150,7 @@ class Container
         
         // if the value is Closure/Function then call it.
         if($value instanceof Closure) {
-            return call_user_func($value, $args);
+            return $this->prepareObject($class,call_user_func($value, $args));
         }
         
         // Check that the class exists before trying to use it
