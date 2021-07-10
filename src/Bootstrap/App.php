@@ -18,6 +18,7 @@ use Emblaze\Http\Response;
 use Emblaze\Session\Session;
 use Emblaze\Database\Database;
 use Emblaze\Container\Container;
+use Emblaze\ServiceProvider\Provider;
 use Emblaze\ServiceProvider\ServiceProviderInterface;
 
 class App extends Container
@@ -50,6 +51,12 @@ class App extends Container
      */
     public Route $route;
 
+     /**
+     * Providers
+     *
+     * @var Route $request
+     */
+    public Provider $provider;
 
     /**
      * customClassStack
@@ -90,6 +97,8 @@ class App extends Container
         // Instantiate new Route & inject the Request, Response
         $this->route = new Route($this->request, $this->response);
         
+        // Instantiate providers
+        $this->provider = new Provider();
     }
 
     /**
@@ -103,6 +112,11 @@ class App extends Container
          * Handle request
          */
         $this->request::handle();
+
+        /**
+         * Handle services providers
+         */
+        $this->provider::handle();
         
         /**
          * Require all files from routes directory

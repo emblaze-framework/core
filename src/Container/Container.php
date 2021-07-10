@@ -150,7 +150,7 @@ class Container
         
         // if the value is Closure/Function then call it.
         if($value instanceof Closure) {
-            return $this->prepareObject($class,call_user_func($value, $args));
+            return $this->prepareObject($class, call_user_func($value, $args));
         }
         
         // Check that the class exists before trying to use it
@@ -226,8 +226,8 @@ class Container
             }
             
             // if possible we need to resolve the class dependency
-            // first if the check if the class is already bind.
-            
+
+            // Check if the $class is not yet bound.
             if(!$this->get($class)) {
 
                 // throw new \Exception('This '.$class.' is not yet bind, please bind it.');
@@ -265,10 +265,10 @@ class Container
                 
             }
         
-            // if the class is already bind/singleton on our container we can resolved that only if the value is Closure/Function then call it.
+            // if the class is already added to containers (bind/singleton),
+            // then we can resolved that BUT right now only if the value is Closure/Function
             $classBound = $this->get($class);
             if(($classBound['value'] ?? null) instanceof Closure) {
-                
                 $dependencies[] = call_user_func($classBound['value']);
             } else {
                 throw new \Exception("Complicated!!! - Can't be resolve dependency class {$class}.");
