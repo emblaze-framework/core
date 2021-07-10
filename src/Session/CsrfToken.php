@@ -19,7 +19,7 @@ class CsrfToken
      *
      * @var string
      */
-    public static string $csrf_name = 'csrf_token';
+    public static string $csrf_name = '';
 
     /**
      * CsrfToken Constructor
@@ -28,7 +28,7 @@ class CsrfToken
      */
     public function __construct()
     {
-        self::$csrf_name = env('CSRF_TOKEN_NAME');
+        self::$csrf_name = env('XSRF_TOKEN_NAME');
     }
 
     /**
