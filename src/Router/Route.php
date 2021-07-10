@@ -9,8 +9,10 @@
  */
 namespace Emblaze\Router;
 
+use ReflectionClass;
 use Emblaze\View\View;
 use Emblaze\Http\Request;
+use Emblaze\Bootstrap\App;
 use Emblaze\Http\Response;
 use Emblaze\Middleware\MiddlewareStack;
 
@@ -237,18 +239,22 @@ class Route
          * EXECUTE GLOBAL MIDDLEWARE FIRST BEFORE TRIGGERING THE other routes middleware
         */
         // static::executeGlobalMiddleware_v2();
-        $request = static::executeMiddlewareStack(\App\Http\HttpCore::$globalMiddleware, static::$request);
-
+        static::executeMiddlewareStack(\App\Http\HttpCore::$globalMiddleware, static::$request);
+       
         /** 
          * EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
         */
-        $request =  static::executeRouteMiddleware($route, $request);
+        static::executeRouteMiddleware($route, static::$request);
         // -----------------------------------------------------------
-
+       
         // Add the $request to params
-        $params[] = $request;
+        // $params[] = $request;
+        // Add the $response to params
+        // $params[] = static::$response;
 
         $callback = $route['callback'];
+
+        
         if(is_callable($callback)) {
             return call_user_func_array($callback, $params);
         }
@@ -259,17 +265,23 @@ class Route
             list($className, $method) = explode('@',$callback);
             
             $className = "App\Http\Controllers\\".$className;
-            
-            if(class_exists($className)) {
-                $object = new $className();
-                if(method_exists($object, $method)) {
-                    return call_user_func_array([$object, $method], $params);
-                } else {
-                    throw new \ReflectionException("The method ".$method." is not exists at ".$className);    
-                }
-            } else {
+
+            // if class is not found throw error
+            if(!class_exists($className)) { 
                 throw new \ReflectionException("class ".$className." is not found.");
             }
+        
+            $object = new $className();
+
+            if(!method_exists($object, $method)) {
+                throw new \ReflectionException("The method ".$method." is not exists at ".$className);
+            }
+
+            // Before calling the controller method we need to check/build what is the required parameters from that method.
+            $params = static::buildMethodParameters($className, $method, $params);
+            
+            return call_user_func_array([$object, $method], $params);
+
         }
 
         // OR
@@ -293,9 +305,117 @@ class Route
                 throw new \ReflectionException("Class ".$className." is not found.");
             }
         }
-        
       
     }
+    
+    /**
+     * This will build the parameters of controller method.
+     * It means we will automatically injected required services provider into contoller method,
+     * if that method needs our services provider
+     *
+     * @param string $className
+     * @param mixed $controllerMethod
+     * @param array $params
+     * @param mixed $request
+     * @param mixed $response
+     * @return mixed
+     */
+    protected static function buildMethodParameters($className, $controllerMethod, $params = [])
+    {
+        // dump($controllerMethod);
+        // Create a reflection of the class
+        $reflector = new ReflectionClass($className);
+
+        $methods = $reflector->getMethods();
+        
+        foreach($methods as $method) {
+
+            if($method->name === $controllerMethod) {
+                
+                $methodParameters = $method->getParameters();
+                if(!$methodParameters) {
+                    return $params;
+                }
+
+                foreach($methodParameters as $dependency) {
+                    
+                    $name = $dependency->name;
+
+                    $position = $dependency->getPosition();
+
+                    $type = $dependency->getType();
+                    if(!is_null($type)) {
+                        $class = $type->getName();    
+                    }
+                    
+    
+                    // Emblaze Request and Response should always be automatically added to params. 
+                    // this is a given params to controller method.
+                    // if Emblaze\Http\Request 
+                    // This is automatically injected,
+                    // if($class === 'Emblaze\Http\Request') {
+                    //     App::$app->request = static::$request;
+                    //     static::array_insert($params,$position, App::$app->request);
+
+                    //     dump($params);
+                    //     // die();
+                    //     continue;
+                    // }
+
+                    // if($class === 'Emblaze\Http\Response') {
+                    //     static::array_insert($params,$position, static::$response);
+                    //     continue;
+                    // }
+
+                    if($name == 'request') {
+                        static::array_insert($params,$position, static::$request);
+                        continue;
+                    }
+                    
+                    if($name == 'response') {
+                        static::array_insert($params,$position, static::$response);
+                        continue;
+                    }
+                    
+                    if(!$value = App::$app->get($class)) {
+                        throw new \Exception('This '.$class.' is not yet added to your container, please bind it first.');
+                    }
+
+                    
+                    
+                    dump($value['value']);
+                    dump($value['singleton']);
+                    
+                    static::array_insert($params, $position, $value);
+                    
+                }
+                break;
+            }
+        }
+        return $params;
+    }
+    
+    /**
+     * A function that can insert at both integer and string positions:
+     * 
+     * @param array      $array
+     * @param int|string $position
+     * @param mixed      $insert
+     */
+    protected static function array_insert(&$array, $position, $insert)
+    {
+        if (is_int($position)) {
+            array_splice($array, $position, 0, $insert);
+        } else {
+            $pos   = array_search($position, array_keys($array));
+            $array = array_merge(
+                array_slice($array, 0, $pos),
+                $insert,
+                array_slice($array, $pos)
+            );
+        }
+    }
+
     
     /**
      * Execute routes middleware
@@ -303,7 +423,7 @@ class Route
      * @param Request $request
      * @param array $routes
      */
-    protected static function executeRouteMiddleware($route = [], Request $request = null)
+    protected static function executeRouteMiddleware($route = [])
     {
         $middlewareNames = explode('|',$route['middleware']);
 
@@ -327,11 +447,12 @@ class Route
         }
 
         // This will return a new request from custom routes middlewares. e.g. Admin, Owner Middlewares.
-        $request = static::executeMiddlewareStack($newMiddlewareStack, $request);
-        return $request;
-        
+        // $request = static::executeMiddlewareStack($newMiddlewareStack, $request);
+        // return $request;
+        return static::executeMiddlewareStack($newMiddlewareStack, static::$request);
     }
 
+  
     /**
      * Execute middleware
      * 
@@ -389,7 +510,7 @@ class Route
       * @param Request $request
       * @return mixed
       */
-    protected static function executeMiddlewareStack($middlewares = [], Request $request = null)
+    protected static function executeMiddlewareStack($middlewares = [])
     {
         // Get list of global middleware stack from \App\Http\HttpCore;
         // $middlewares = \App\Http\HttpCore::$globalMiddleware;
@@ -412,9 +533,9 @@ class Route
         }
         
         // handle middleware stack and and inject the users static::$request
-        $request = $mwStack->handle($request);
-
-        return $request;
+        // $request = $mwStack->handle($request);
+        // return $request;
+        return $mwStack->handle(static::$request);
     }
 
     /**

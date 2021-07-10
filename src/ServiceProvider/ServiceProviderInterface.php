@@ -13,5 +13,12 @@ use Emblaze\Bootstrap\App;
 
 interface ServiceProviderInterface
 {
+    /**
+     * Register providers
+     *
+     * @param App $app
+     * @return void
+     */
     public function register(App $app);
+    
 }
