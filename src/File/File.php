@@ -16,9 +16,7 @@ class File
      * 
      * @return void
      */
-    private function __construct() {
-        return "not null";
-    }
+    private function __construct() {}
 
     /**
      * Root Path

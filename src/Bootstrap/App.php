@@ -99,6 +99,7 @@ class App extends Container
 
         // Instantiate new Route & inject the Request, Response
         $this->route = new Route($this->request, $this->response);
+        
        
     }
 
@@ -134,7 +135,6 @@ class App extends Container
          */
         $data = $this->route::handle();
 
-       
         /**
          * Send the response to user
          */
