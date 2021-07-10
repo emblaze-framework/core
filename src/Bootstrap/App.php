@@ -88,6 +88,9 @@ class App extends Container
         // $app var is now App intance
         self::$app = $this;
 
+        // Instantiate providers
+        $this->provider = new Provider();
+
         // Instantiate new Request
         $this->request = new Request();
 
@@ -96,9 +99,7 @@ class App extends Container
 
         // Instantiate new Route & inject the Request, Response
         $this->route = new Route($this->request, $this->response);
-        
-        // Instantiate providers
-        $this->provider = new Provider();
+       
     }
 
     /**

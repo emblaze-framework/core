@@ -240,11 +240,12 @@ class Route
         */
         // static::executeGlobalMiddleware_v2();
         static::executeMiddlewareStack(\App\Http\HttpCore::$globalMiddleware, static::$request);
-       
+        
         /** 
          * EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
         */
         static::executeRouteMiddleware($route, static::$request);
+
         // -----------------------------------------------------------
        
         // Add the $request to params
@@ -332,89 +333,62 @@ class Route
 
             if($method->name === $controllerMethod) {
                 
+                // Parameters of Controller Method.
                 $methodParameters = $method->getParameters();
+
+                // inf the parameters is empty or null
                 if(!$methodParameters) {
                     return $params;
                 }
 
                 foreach($methodParameters as $dependency) {
                     
-                    $name = $dependency->name;
+                    // $name = $dependency->name;
 
                     $position = $dependency->getPosition();
 
                     $type = $dependency->getType();
+                    
                     if(!is_null($type)) {
-                        $class = $type->getName();    
-                    }
-                    
-    
-                    // Emblaze Request and Response should always be automatically added to params. 
-                    // this is a given params to controller method.
-                    // if Emblaze\Http\Request 
-                    // This is automatically injected,
-                    // if($class === 'Emblaze\Http\Request') {
-                    //     App::$app->request = static::$request;
-                    //     static::array_insert($params,$position, App::$app->request);
+                        $class = $type->getName(); 
+                       
+                        // Emblaze Request and Response should always be automatically added to params. 
+                        // this is a given params to controller method.
+                        // if Emblaze\Http\Request 
+                        // This is automatically injected,
+                        if($class === 'Emblaze\Http\Request') {
+                            $params[$position] = static::$request;
 
-                    //     dump($params);
-                    //     // die();
-                    //     continue;
-                    // }
+                            continue;
+                        }
 
-                    // if($class === 'Emblaze\Http\Response') {
-                    //     static::array_insert($params,$position, static::$response);
-                    //     continue;
-                    // }
+                        if($class === 'Emblaze\Http\Response') {
+                            $params[$position] = static::$response;
 
-                    if($name == 'request') {
-                        static::array_insert($params,$position, static::$request);
-                        continue;
-                    }
-                    
-                    if($name == 'response') {
-                        static::array_insert($params,$position, static::$response);
-                        continue;
-                    }
-                    
-                    if(!$value = App::$app->get($class)) {
-                        throw new \Exception('This '.$class.' is not yet added to your container, please bind it first.');
-                    }
+                            continue;
+                        }
 
-                    
-                    
-                    dump($value['value']);
-                    dump($value['singleton']);
-                    
-                    static::array_insert($params, $position, $value);
-                    
+                        // check if the $class is not yet added to your container,
+                        if(!App::$app->get($class)) {
+                            throw new \Exception('This '.$class.' is not yet added to your container, please bind it first.');
+                        }
+
+                        // resolve the class and get the instance.
+                        $resolveClass = App::$app->resolve($class);
+                        
+                        // set the resolve class instance to its controller method parameter position
+                        $params[$position] = $resolveClass;
+
+                    }                    
                 }
+                
                 break;
             }
         }
+        
         return $params;
     }
     
-    /**
-     * A function that can insert at both integer and string positions:
-     * 
-     * @param array      $array
-     * @param int|string $position
-     * @param mixed      $insert
-     */
-    protected static function array_insert(&$array, $position, $insert)
-    {
-        if (is_int($position)) {
-            array_splice($array, $position, 0, $insert);
-        } else {
-            $pos   = array_search($position, array_keys($array));
-            $array = array_merge(
-                array_slice($array, 0, $pos),
-                $insert,
-                array_slice($array, $pos)
-            );
-        }
-    }
 
     
     /**

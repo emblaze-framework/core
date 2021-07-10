@@ -30,6 +30,7 @@ class MiddlewareStack
         // initial start
         // this initial start Closure will run at the end of the middleware stack.
         $this->start = function(Request $request) {
+            
             return $request;
         };
     }
