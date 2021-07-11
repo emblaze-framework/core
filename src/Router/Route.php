@@ -291,7 +291,9 @@ class Route
 
             if(class_exists($className)) {
                
+                // instantiate the Controller.
                 $object = new $className();
+                
                 if(method_exists($object, $method)) {
 
                     // Before calling the controller method we need to check/build what is the required parameters from that method.

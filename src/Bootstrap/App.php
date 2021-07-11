@@ -67,7 +67,7 @@ class App extends Container
         // Start Session
         Session::start();
 
-        // $app var is now App intance
+        // $app is now App intance
         self::$app = $this;
 
         // Instantiate providers
