@@ -9,10 +9,6 @@
  */
 namespace Emblaze\ServiceProvider;
 
-use Emblaze\File\File;
-use Emblaze\Bootstrap\App;
-
-
 class Provider
 {
     /**
@@ -22,14 +18,9 @@ class Provider
      */
     public static function handle()
     {
-        // get the app config array
-        $app_config = File::require_file('config/app.php');
-
-        // get the providers stack from app_config array
-        $providersStack = $app_config['providers'];
-
+    
         // loop through the providers
-        foreach ($providersStack as $provider) {
+        foreach (app()->appConfig['providers'] as $provider) {
 
             // check if service provider class exists
             if(!class_exists($provider)) {
@@ -40,7 +31,7 @@ class Provider
             $providerInstance = new $provider;
 
             // trigger the register method and inject the App instance.
-            $providerInstance->register(App::$app);
+            $providerInstance->register(app());
         }
     }
 }

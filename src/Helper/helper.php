@@ -260,3 +260,18 @@ if(! function_exists('get_page_load_time')) {
         echo '<br/><br/><br/>This page loaded in ', $end, ' seconds';
     }
 }
+
+if(! function_exists('asset_url')) {
+    /**
+     * Get the page load time
+     *
+     * @return mixed
+     */
+    function asset_url($asset) {
+        // get app config 
+        // $app_config = Emblaze\File\File::require_file('config/app.php');
+        // dump($app_config);
+        // dump(Emblaze\File\File::path('test'));
+        die();
+    }
+}

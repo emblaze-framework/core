@@ -12,6 +12,7 @@ namespace Emblaze\Bootstrap;
 use Emblaze\File\File;
 use Emblaze\Http\Request;
 use Emblaze\Router\Route;
+use Emblaze\Config\Config;
 use Emblaze\Http\Response;
 use Emblaze\Session\Session;
 use Emblaze\Container\Container;
@@ -55,6 +56,13 @@ class App extends Container
     public Provider $provider;
 
     /**
+     * App Config
+     * 
+     * @var array
+     */
+    public $appConfig;
+
+    /**
      * App constructor
      * 
      * @return void
@@ -66,6 +74,10 @@ class App extends Container
        
         // Start Session
         Session::start();
+
+        
+        // Get App Config
+        $this->appConfig = Config::get('app');
 
         // $app is now App intance
         self::$app = $this;
