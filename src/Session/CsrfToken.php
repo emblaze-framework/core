@@ -28,7 +28,7 @@ class CsrfToken
      */
     public function __construct()
     {
-        self::$csrf_name = env('XSRF_TOKEN_NAME');
+        self::$csrf_name = appConfig('xsrf_token_name');
     }
 
     /**

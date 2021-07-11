@@ -25,7 +25,7 @@ class Session
     {
         if(! session_id()) {
             ini_set('session.use_only_cookies', 1);
-            session_name(env('SESSION_NAME'));
+            session_name(app()->appConfig['session_name']);
             session_start();
         }
     }

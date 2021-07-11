@@ -15,6 +15,7 @@ use Emblaze\Router\Route;
 use Emblaze\Config\Config;
 use Emblaze\Http\Response;
 use Emblaze\Session\Session;
+use Emblaze\Exceptions\Whoops;
 use Emblaze\Container\Container;
 use Emblaze\ServiceProvider\Provider;
 
@@ -69,18 +70,20 @@ class App extends Container
      */
     public function __construct() {
 
-        // Instantiate Cookie CsrfToken
-        new \Emblaze\Cookie\CsrfToken();
-       
-        // Start Session
-        Session::start();
-
-        
         // Get App Config
         $this->appConfig = Config::get('app');
 
         // $app is now App intance
         self::$app = $this;
+
+        // Register Whoops
+        appConfig('whoops_enabled') ? Whoops::handle() : null;
+        
+        // Start Session
+        Session::start();
+
+        // Instantiate Cookie CsrfToken
+        new \Emblaze\Cookie\CsrfToken();
 
         // Instantiate providers
         $this->provider = new Provider();
@@ -94,7 +97,6 @@ class App extends Container
         // Instantiate new Route & inject the Request, Response
         $this->route = new Route($this->request, $this->response);
         
-       
     }
 
     /**

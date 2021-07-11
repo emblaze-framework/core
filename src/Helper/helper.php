@@ -249,6 +249,18 @@ if(! function_exists('app')) {
     }
 }
 
+if(! function_exists('appConfig')) {
+    /**
+     * App Config
+     *
+     * @return mixed
+     */
+    function appConfig($key = 'name') {
+        return app()->appConfig[$key];
+    }
+}
+
+
 if(! function_exists('get_page_load_time')) {
     /**
      * Get the page load time
