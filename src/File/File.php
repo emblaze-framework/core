@@ -76,6 +76,7 @@ class File
         if(static::exist($path)) {
             return require_once static::path($path);
         }
+        
     }
 
     /**
@@ -102,12 +103,32 @@ class File
         // array_diff will exclude the '.', and '..' on array.
         $files = array_diff(scandir(static::path($path)),['.','..']);
 
+        // vd(static::path($path));
+
         foreach ($files as $file) {
-            $file_path = $path . static::ds() . $file;
-            if(static::exist($file_path)) {
-                // this will require_once all files from path folder e.g. 'routes'
-                static::require_file($file_path);
+
+            //-> "routes/api.php" file OR "routes/emblaze" directory
+            $file_path = $path . static::ds() . $file; 
+
+            //-> "/Users/reymarkdivino/Desktop/PHP-MVC/emblaze/emblaze/routes/api.php" file OR 
+            // "/Users/reymarkdivino/Desktop/PHP-MVC/emblaze/emblaze/routes/emblaze" directory
+            $full_file_path = ROOT. static::ds() . $file_path; 
+            
+            // Checking whether a file is directory or not
+            if (is_dir($full_file_path)) {
+                // if the file is directory then rerun this require_directory function
+                // re-run 
+                self::require_directory($file_path);
+               
+            }  else {
+                if(static::exist($file_path)) {
+                    // This will require_once all files from path folder e.g. 'routes' or 'routes/emblaze'
+                    static::require_file($file_path);
+                }
             }
+
+            
+
         }
 
     }
