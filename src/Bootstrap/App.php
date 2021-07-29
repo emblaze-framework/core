@@ -76,7 +76,10 @@ class App extends Container
         $this->config = Config::getall();
 
         // Register Whoops
-        // appConfig('whoops_enabled') ? Whoops::handle() : null;
+        // config('app.whoops_enabled') ? Whoops::handle() : null;
+
+        // Initialize Whoops if debug is set to TRUE
+        config('app.debug') ? Whoops::handle() : null;
         
         // Start Session
         Session::start();

@@ -20,7 +20,7 @@ class Provider
     {
     
         // loop through the providers
-        foreach (app()->appConfig['providers'] as $provider) {
+        foreach (config('app.providers') as $provider) {
 
             // check if service provider class exists
             if(!class_exists($provider)) {
