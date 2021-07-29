@@ -249,14 +249,25 @@ if(! function_exists('app')) {
     }
 }
 
-if(! function_exists('appConfig')) {
+// if(! function_exists('appConfig')) {
+//     /**
+//      * App Config
+//      *
+//      * @return mixed
+//      */
+//     function appConfig($key = 'name') {
+//         return app()->appConfig[$key];
+//     }
+// }
+
+if(! function_exists('config')) {
     /**
      * App Config
      *
      * @return mixed
      */
-    function appConfig($key = 'name') {
-        return app()->appConfig[$key];
+    function config($keys = 'app.name') {
+        return Emblaze\Config\Config::get($keys);
     }
 }
 

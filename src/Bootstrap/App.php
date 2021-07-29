@@ -57,11 +57,11 @@ class App extends Container
     public Provider $provider;
 
     /**
-     * App Config
+     * Config
      * 
      * @var array
      */
-    public $appConfig;
+    public $config = [];
 
     /**
      * App constructor
@@ -69,15 +69,14 @@ class App extends Container
      * @return void
      */
     public function __construct() {
-
-        // Get App Config
-        $this->appConfig = Config::get('app');
-
         // $app is now App intance
         self::$app = $this;
 
+        // Initialize Config
+        $this->config = Config::getall();
+
         // Register Whoops
-        appConfig('whoops_enabled') ? Whoops::handle() : null;
+        // appConfig('whoops_enabled') ? Whoops::handle() : null;
         
         // Start Session
         Session::start();
