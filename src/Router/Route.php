@@ -76,6 +76,8 @@ class Route
      */
     private static function add($methods, $uri, $callback)
     {
+        
+        
         $uri = trim($uri,'/');
 
         $uri = rtrim(static::$prefix . '/' . $uri, '/');
@@ -90,6 +92,7 @@ class Route
                 'middleware' => static::$routeMiddlewares,
             ];
         }
+
     }
 
     /**
@@ -519,8 +522,8 @@ class Route
      * 
      * @return array
      */
-    // public static function allRoutes()
-    // {
-    //     return static::$routes;
-    // }
+    public static function allRoutes()
+    {
+        return static::$routes;
+    }
 }

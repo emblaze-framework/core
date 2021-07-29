@@ -126,10 +126,6 @@ class File
                     static::require_file($file_path);
                 }
             }
-
-            
-
         }
-
     }
 }
