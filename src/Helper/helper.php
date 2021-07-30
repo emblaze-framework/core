@@ -280,7 +280,7 @@ if(! function_exists('get_page_load_time')) {
      */
     function get_page_load_time() {
         $end = number_format((microtime(true) - EMBLAZE_START),2);
-        echo '<br/><br/><br/>This page loaded in ', $end, ' seconds';
+        echo '<div style="position: fixed; padding: 5px;bottom: 0;width:100%;background:#6cf;">This page loaded in ', $end, ' seconds</div>';
     }
 }
 
