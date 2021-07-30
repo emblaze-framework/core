@@ -18,6 +18,13 @@ use Emblaze\Middleware\MiddlewareStack;
 
 class Route
 {
+     /**
+     * Self instance
+     * 
+     */
+    private static $route;
+
+    
     /**
      * Route container
      * 
@@ -56,6 +63,10 @@ class Route
      */
     private static Response $response;
 
+
+    private static $name = '';
+
+
     /**
      * Route constructor
      * 
@@ -64,6 +75,8 @@ class Route
     public function __construct(Request $request, Response $response) {
         self::$request = $request;
         self::$response = $response;
+
+        self::$route = $this;
     }
 
     
@@ -77,22 +90,84 @@ class Route
     private static function add($methods, $uri, $callback)
     {
         
-        
         $uri = trim($uri,'/');
-
+        
         $uri = rtrim(static::$prefix . '/' . $uri, '/');
 
         $uri = $uri?:'/';
 
         foreach (explode('|', $methods) as $method) {
-            static::$routes[] = [
+            
+            // generate random name
+            $bytes = random_bytes(16);
+            $random_name = bin2hex($bytes);
+            static::$name = $random_name;
+
+            static::$routes[static::$name] = [
                 'uri' => $uri,
                 'callback' => $callback,
                 'method' => $method,
                 'middleware' => static::$routeMiddlewares,
+                'active' => true,
+                'status' => 'Active',
+                'name' => static::$name,
             ];
         }
 
+        return self::$route;
+
+    }
+
+    /**
+     * disabled route
+     *
+     */
+    public function disable() 
+    {
+        
+        static::$routes[static::$name]['active'] = false;
+        static::$routes[static::$name]['status'] = 'Disabled';
+
+        return self::$route;
+    }
+
+    /**
+     * enable route
+     *
+     */
+    public function enable() 
+    {
+        static::$routes[static::$name]['active'] = true;
+        static::$routes[static::$name]['status'] = 'Active';
+
+        return self::$route;
+    }
+
+    /**
+     * This will change the key_name from static::$routes[key_name]
+     * and also update the 'name' from routes value
+     *
+     * @param string $name
+     */
+    public function name($key_name = '')
+    {
+        if(trim($key_name) != '') {
+            
+            // reference the value to $item var
+            $item = static::$routes[static::$name];
+
+            // set the $item value into new routes with new key_name
+            static::$routes[$key_name] = $item;
+
+            // unset/remove the old routes item.
+            unset(static::$routes[static::$name]);
+
+            // also update the 'name' value from that routes.
+            static::$routes[$key_name]['name'] = $key_name;
+
+        }
+
+        return self::$route;
     }
 
     /**
@@ -103,7 +178,7 @@ class Route
      */
     public static function get($uri, $callback)
     {
-        static::add('GET', $uri, $callback);
+        return static::add('GET', $uri, $callback);
     }
 
     /**
@@ -114,7 +189,7 @@ class Route
      */
     public static function post($uri, $callback)
     {
-        static::add('POST', $uri, $callback);
+        return static::add('POST', $uri, $callback);
     }
 
     /**
@@ -125,7 +200,7 @@ class Route
      */
     public static function any($uri, $callback)
     {
-        static::add('GET|POST', $uri, $callback);
+        return static::add('GET|POST', $uri, $callback);
     }
 
     /**
