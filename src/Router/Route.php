@@ -66,6 +66,7 @@ class Route
 
     private static $name = '';
 
+    private static $code_line = 0;
 
     /**
      * Route constructor
@@ -90,6 +91,9 @@ class Route
     private static function add($methods, $uri, $callback)
     {
         
+        $controller_path = self::$route->file_name($callback);
+        
+        
         $uri = trim($uri,'/');
         
         $uri = rtrim(static::$prefix . '/' . $uri, '/');
@@ -111,11 +115,79 @@ class Route
                 'active' => true,
                 'status' => 'Active',
                 'name' => static::$name,
+                'config' => [
+                    'controller_path' => $controller_path,
+                    'code_line' => static::$code_line,
+                ]
             ];
         }
 
         return self::$route;
 
+    }
+
+    /**
+     * Get the full file name of the controller path,
+     * and also get the code_line.
+     *
+     * @param mixed $callback
+     * @return void
+     */
+    private function file_name($callback)
+    {
+        // Notes: Need to update soon:
+        // the code_line of callback e.g. SiteController@index or [SiteController::class, 'method']
+        // should be the line from where the method is coded.
+
+        if(is_callable($callback)) {
+            // The file name shoud be the the routes file.
+            $backTrace = debug_backtrace();
+            
+            static::$code_line = $backTrace[2]['line'];// Output e.g. 91
+            
+            $file_path = $backTrace[2]['file']; // Output e.g. /Users/reymarkdivino/Desktop/PHP-MVC/emblaze/emblaze/routes/web.php
+            
+            return $file_path;
+        }
+
+        // use e.g. SiteController@index
+        // like: Route::get('/home',SiteController@index)
+        if(!is_array($callback) && strpos($callback,'@') !== false) {
+            list($className, $method) = explode('@',$callback);
+            
+            $className = "App\Http\Controllers\\".$className;
+            
+            // if class is not found throw error
+            if(!class_exists($className)) { 
+                throw new \ReflectionException("class ".$className." is not found.");
+            }
+
+            // call the method then backtrace
+            
+        
+            $a = new \ReflectionClass($className);
+
+        }
+
+        // OR
+        // use e.g. [SiteController::class, 'method']
+        // like: Route::get('/home',[SiteController::class, 'index'])
+        if(is_array($callback)) {
+            // className is the controller
+            $className = $callback[0];
+
+            if(class_exists($className)) {
+
+                $a = new \ReflectionClass($className);
+                
+            } else {
+                throw new \ReflectionException("Class ".$className." is not found.");
+            }
+        }
+
+       
+        return $a->getFileName();
+        // Output: e.g. C:\xampp7\htdocs\develop\Internal\Database\DB\InternalDB.php
     }
 
     /**
