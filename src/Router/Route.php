@@ -64,8 +64,18 @@ class Route
     private static Response $response;
 
 
+    /**
+     * Route Name
+     *
+     * @var string
+     */
     private static $name = '';
 
+    /**
+     * Code Line
+     *
+     * @var integer
+     */
     private static $code_line = 0;
 
     /**
@@ -103,9 +113,11 @@ class Route
         foreach (explode('|', $methods) as $method) {
             
             // generate random name
-            $bytes = random_bytes(16);
-            $random_name = bin2hex($bytes);
-            static::$name = $random_name;
+            // $bytes = random_bytes(16);
+            // $random_name = bin2hex($bytes);
+            // static::$name = $random_name;
+
+            static::$name = count(static::$routes) + 1;
 
             static::$routes[static::$name] = [
                 'uri' => $uri,
@@ -125,6 +137,8 @@ class Route
         return self::$route;
 
     }
+
+    
 
     /**
      * Get the full file name of the controller path,
@@ -191,7 +205,7 @@ class Route
     }
 
     /**
-     * disabled route
+     * Disabled route
      *
      */
     public function disable() 
@@ -204,7 +218,7 @@ class Route
     }
 
     /**
-     * enable route
+     * Enable route
      *
      */
     public function enable() 
@@ -223,12 +237,24 @@ class Route
      */
     public function name($key_name = '')
     {
-        if(trim($key_name) != '') {
+        $key_name = trim($key_name);
+        
+        // If the name is already been set on $routes[] array
+        if(array_key_exists($key_name, static::$routes)) {
+
+            // $backTrace = debug_backtrace();
+            // $file = $backTrace[0]['file'];
+            // $line = $backTrace[0]['line'];
+            
+            // throw new \Exception('Duplicated route name: '.$key_name.' has been found at '.$file .' at line: '.$line );
+        }
+        
+        if($key_name != '') {
             
             // reference the value to $item var
             $item = static::$routes[static::$name];
 
-            // set the $item value into new routes with new key_name
+            // Set the $item value into new routes with new key_name
             static::$routes[$key_name] = $item;
 
             // unset/remove the old routes item.
