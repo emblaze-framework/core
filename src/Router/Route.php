@@ -242,7 +242,7 @@ class Route
         
         // If the name is already been set on $routes[] array
         if(array_key_exists($key_name, static::$routes)) {
-            $msg = 'Duplicated route name: '.$key_name.' has been found at '.Backtrace::first()->file.' at line: '.Backtrace::first()->line;
+            $msg = 'Duplicated route name:`'.$key_name.'` has been found at '.Backtrace::first()->file.' at line: '.Backtrace::first()->line;
             throw new \Exception($msg);
         }
         
