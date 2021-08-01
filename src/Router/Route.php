@@ -372,6 +372,11 @@ class Route
         static::$routeMiddlewares = $parent_middleware;
     }
 
+    /**
+     * Add one or multiple middleware on single route method
+     *
+     * @param string $middleware
+     */
     public function middleware($middleware)
     {
         $parent_middleware = static::$routes[static::$name]['middleware'];
