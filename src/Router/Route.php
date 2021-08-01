@@ -120,7 +120,7 @@ class Route
             // static::$name = $random_name;
 
             static::$name = count(static::$routes) + 1;
-
+            
             static::$routes[static::$name] = [
                 'uri' => $uri,
                 'callback' => $callback,
@@ -142,6 +142,10 @@ class Route
 
     }
 
+    /**
+     * Display a Route warning for duplication
+     *
+     */
     private static function route_warning_for_duplication($uri, $method = null)
     {
         foreach (static::$routes as $key => $value) {
@@ -167,8 +171,6 @@ class Route
             }
         }
     }
-
-    
 
     /**
      * Get the full file name of the controller path,
@@ -349,12 +351,12 @@ class Route
     }
 
     /**
-     * Set middleware for routing
+     * Set middleware for route group
      * 
      * @param string $middleware
      * @param callback $callback
      */
-    public static function middleware($middleware, $callback)
+    public static function middleware_group($middleware, $callback)
     {
         $parent_middleware = static::$routeMiddlewares;
 
@@ -366,7 +368,20 @@ class Route
             throw new \BadFunctionCallException("Please provide valid callback function");
         }
 
+        // Reset the routeMiddlewares after call_user_func($callback) is triggered
         static::$routeMiddlewares = $parent_middleware;
+    }
+
+    public function middleware($middleware)
+    {
+        $parent_middleware = static::$routes[static::$name]['middleware'];
+
+        $parent_middleware .= '|' . trim($middleware,'|');
+
+        // static::$routeMiddlewares = $parent_middleware;
+        
+        static::$routes[static::$name]['middleware'] = $parent_middleware;
+        
     }
 
     /**
