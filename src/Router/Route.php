@@ -101,9 +101,10 @@ class Route
      */
     private static function add($methods, $uri, $callback)
     {
+
+        static::route_warning_for_duplication($uri, $methods);
         
         $controller_path = self::$route->file_name($callback);
-        
         
         $uri = trim($uri,'/');
         
@@ -130,13 +131,41 @@ class Route
                 'name' => static::$name,
                 'config' => [
                     'controller_path' => $controller_path,
-                    'code_line' => static::$code_line,
+                    'controller_code_line' => static::$code_line,
+                    'route_path' => Backtrace::get(2)->file,
+                    'route_code_line' => Backtrace::get(2)->line,
                 ]
             ];
         }
 
         return self::$route;
 
+    }
+
+    private static function route_warning_for_duplication($uri, $method = null)
+    {
+        foreach (static::$routes as $key => $value) {
+            if($value['uri'] != $uri) {
+                continue;
+            }
+            
+            if($value['uri'] === $uri && $value['method'] == $method) {
+                
+                if(!config('app.debug')) {
+                    break;
+                }
+                
+                $warning = "[Warning] - Route duplication detected. The first registered route will be prioritize to load and the other will be ignored.";
+                $info1 = '[Info] - The route <b>'.$method.'</b> method with URI: <b>'.$uri.'</b> is already exists and you are about to add the same METHOD with same URI.';
+                $info2 = '[Info] - Duplicated route can be found at: <b>'.Backtrace::get(3)->file.'</b> on line <b>'.Backtrace::get(3)->line.'</b>';
+                
+                echo $warning.'<br/>';
+                echo $info1.'<br/>';
+                echo $info2.'<br/>';
+                
+                break;   
+            }
+        }
     }
 
     
