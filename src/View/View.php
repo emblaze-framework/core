@@ -26,11 +26,11 @@ class View
         /**
          * flash errors that came from Emblaze\Validation\Validate
          */
-        $errors = Session::flash('errors');
-        $old = Session::flash('old');
+        // $errors = Session::flash('errors');
+        // $old = Session::flash('old');
 
         // add the errors and old into $data
-        $data = array_merge($data, [$errors,$old]);
+        // $data = array_merge($data, [$errors, $old]);
 
         // Render using Blade Engine
         // return static::bladeRender($path, $data);
