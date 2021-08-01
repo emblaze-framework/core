@@ -407,6 +407,12 @@ class Route
      */
     public static function invoke($route, $params = [])
     {
+
+        // Check if the route is active
+        if(!$route['active']) {
+            echo 'Sorry, This route is currently disabled';
+            die();
+        }
         
         /** 
          * EXECUTE GLOBAL MIDDLEWARE FIRST BEFORE TRIGGERING THE other routes middleware
