@@ -280,7 +280,7 @@ if(! function_exists('get_page_load_time')) {
      */
     function get_page_load_time() {
         $end = number_format((microtime(true) - EMBLAZE_START),2);
-        echo '<div style="position: fixed; padding: 5px;bottom: 0;width:100%;background:#6cf;">This page loaded in ', $end, ' seconds</div>';
+        echo '<div style="position: fixed; padding: 5px;bottom: 0;width:100%;background:#6cf;background: linear-gradient(#504b45 0%, #3c3b37 100%);width: 100%; box-sizing: border-box;align-items: center;border-top-left-radius: 6px;border-top-right-radius: 6px;color: white;">This page loaded in ', $end, ' seconds</div>';
     }
 }
 
