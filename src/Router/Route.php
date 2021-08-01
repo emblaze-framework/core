@@ -14,6 +14,7 @@ use Emblaze\View\View;
 use Emblaze\Http\Request;
 use Emblaze\Bootstrap\App;
 use Emblaze\Http\Response;
+use Emblaze\Debug\Backtrace;
 use Emblaze\Middleware\MiddlewareStack;
 
 class Route
@@ -154,12 +155,12 @@ class Route
         // should be the line from where the method is coded.
 
         if(is_callable($callback)) {
+            
             // The file name shoud be the the routes file.
-            $backTrace = debug_backtrace();
             
-            static::$code_line = $backTrace[2]['line'];// Output e.g. 91
+            static::$code_line = Backtrace::get(3)->line;// Output e.g. 91
             
-            $file_path = $backTrace[2]['file']; // Output e.g. /Users/reymarkdivino/Desktop/PHP-MVC/emblaze/emblaze/routes/web.php
+            $file_path = Backtrace::get(3)->file; // Output e.g. /Users/reymarkdivino/Desktop/PHP-MVC/emblaze/emblaze/routes/web.php
             
             return $file_path;
         }
@@ -241,12 +242,8 @@ class Route
         
         // If the name is already been set on $routes[] array
         if(array_key_exists($key_name, static::$routes)) {
-
-            // $backTrace = debug_backtrace();
-            // $file = $backTrace[0]['file'];
-            // $line = $backTrace[0]['line'];
-            
-            // throw new \Exception('Duplicated route name: '.$key_name.' has been found at '.$file .' at line: '.$line );
+            $msg = 'Duplicated route name: '.$key_name.' has been found at '.Backtrace::first()->file.' at line: '.Backtrace::first()->line;
+            throw new \Exception($msg);
         }
         
         if($key_name != '') {

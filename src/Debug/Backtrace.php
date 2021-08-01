@@ -41,7 +41,23 @@ class Backtrace
      */
     public static function first()
     {
-        return (object)debug_backtrace()[0];
+        $bt = debug_backtrace();
+
+        foreach ($bt as $index => $backtrace) {
+
+            // This will remove/unset the array value that have a class 'Emblaze\Debug\Backtrace'
+            if(array_key_exists('class',$backtrace)) {
+                if($backtrace['class'] === 'Emblaze\Debug\Backtrace') {
+                    unset($bt[$index]);
+                    continue;
+                }
+            }
+        }
+        
+        // Get the first key of array
+        $firstKey = array_key_first($bt);
+
+        return (object)$bt[$firstKey];
     }
 
     /**
