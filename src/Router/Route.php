@@ -207,10 +207,7 @@ class Route
             if(!class_exists($className)) { 
                 throw new \ReflectionException("class ".$className." is not found.");
             }
-
-            // call the method then backtrace
             
-        
             $a = new \ReflectionClass($className);
 
         }
@@ -347,7 +344,10 @@ class Route
             throw new \BadFunctionCallException("Please provide valid callback function");
         }
 
+        // Reset the static::$prefix after call_user_func($callback) is triggered
         static::$prefix = $parent_prefix;
+
+        return static::$route;
     }
 
     /**
@@ -368,7 +368,7 @@ class Route
             throw new \BadFunctionCallException("Please provide valid callback function");
         }
 
-        // Reset the routeMiddlewares after call_user_func($callback) is triggered
+        // Reset the static::$routeMiddlewares after call_user_func($callback) is triggered
         static::$routeMiddlewares = $parent_middleware;
     }
 
