@@ -108,7 +108,14 @@ if(! function_exists('url')) {
      * @return mixed
      */
     function url($path) {
+        
+        if(array_key_exists($path, Emblaze\Router\Route::$routes)) {
+            $route = (object)Emblaze\Router\Route::$routes[$path];
+            return Emblaze\Url\Url::path($route->uri);    
+        }
+
         return Emblaze\Url\Url::path($path);
+
     }
 }
 
@@ -283,6 +290,19 @@ if(! function_exists('get_page_load_time')) {
         echo '<div style="position: fixed; padding: 5px;bottom: 0;width:100%;background:#6cf;background: linear-gradient(#504b45 0%, #3c3b37 100%);width: 100%; box-sizing: border-box;align-items: center;border-top-left-radius: 6px;border-top-right-radius: 6px;color: white;">This page loaded in ', $end, ' seconds</div>';
     }
 }
+
+if(! function_exists('route')) {
+    /**
+     * Get routes info
+     *
+     * @return object
+     */
+    function route($name = null) {
+        return (object)Emblaze\Router\Route::$routes[$name];
+    }
+}
+
+
 
 if(! function_exists('asset_url')) {
     /**

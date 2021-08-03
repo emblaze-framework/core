@@ -31,7 +31,7 @@ class Route
      * 
      * @var array $routes
      */
-    private static $routes = [];
+    public static $routes = [];
 
 
     /**
