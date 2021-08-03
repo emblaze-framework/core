@@ -79,6 +79,8 @@ class Route
      */
     private static $code_line = 0;
 
+    private static $httpMethod;
+
     /**
      * Route constructor
      * 
@@ -112,7 +114,9 @@ class Route
 
         static::route_warning_for_duplication($uri, $methods);
         
-        foreach (explode('|', $methods) as $httpMethod) {            
+        foreach (explode('|', $methods) as $httpMethod) {    
+            
+            static::$httpMethod = strtolower($httpMethod);
             
             static::default_route_name($uri,$callback, $httpMethod);
 
@@ -232,7 +236,7 @@ class Route
 
         $httpMethod = strtolower($httpMethod);
 
-        if($prefix === $uriExploded ) {
+        if($prefix === $uriExploded) {
             static::$name = $uriExploded . $callbackMethod;
         } else {
             static::$name = $prefix . $uriExploded . $callbackMethod;
@@ -361,17 +365,26 @@ class Route
     public function name($key_name = '')
     {
         $key_name = trim($key_name);
+
+          
+            // reference the value to $item var
+            $item = static::$routes[static::$name];
         
         // If the name is already been set on $routes[] array
         if(array_key_exists($key_name, static::$routes)) {
-            $msg = 'Duplicated route named "'.$key_name.'" has been found at '.Backtrace::first()->file.' on line '.Backtrace::first()->line;
-            throw new \Exception($msg);
+
+            if(self::$routes[$key_name]['method'] == static::$httpMethod) {
+
+                $msg = 'Duplicated route named "'.$key_name.'" has been found at '.Backtrace::first()->file.' on line '.Backtrace::first()->line;
+                throw new \Exception($msg);                
+            }
+            
+            $key_name .= '.' . static::$httpMethod;
+            
         }
         
         if($key_name != '') {
-            
-            // reference the value to $item var
-            $item = static::$routes[static::$name];
+          
 
             // Set the $item value into new routes with new key_name
             static::$routes[$key_name] = $item;
