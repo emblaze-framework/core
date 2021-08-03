@@ -102,8 +102,6 @@ class Route
     private static function add($methods, $uri, $callback)
     {
 
-        static::route_warning_for_duplication($uri, $methods);
-        
         $controller_path = self::$route->file_name($callback);
         
         $uri = trim($uri,'/');
@@ -112,30 +110,32 @@ class Route
 
         $uri = $uri?:'/';
 
-        foreach (explode('|', $methods) as $method) {
+        static::route_warning_for_duplication($uri, $methods);
+        
+        foreach (explode('|', $methods) as $httpMethod) {            
             
-            // generate random name
-            // $bytes = random_bytes(16);
-            // $random_name = bin2hex($bytes);
-            // static::$name = $random_name;
+            static::default_route_name($uri,$callback, $httpMethod);
 
-            static::$name = count(static::$routes) + 1;
+            static::route_names_duplication_check(static::$name, $httpMethod);
             
+            // Register/Add New Routes
             static::$routes[static::$name] = [
                 'uri' => $uri,
                 'callback' => $callback,
-                'method' => $method,
+                'method' => $httpMethod,
                 'middleware' => static::$routeMiddlewares,
                 'active' => true,
                 'status' => 'Active',
                 'name' => static::$name,
                 'config' => [
+                    'prefix' => static::$prefix,
                     'controller_path' => $controller_path,
                     'controller_code_line' => static::$code_line,
                     'route_path' => Backtrace::get(2)->file,
                     'route_code_line' => Backtrace::get(2)->line,
                 ]
             ];
+
         }
 
         return self::$route;
@@ -143,29 +143,123 @@ class Route
     }
 
     /**
-     * Display a Route warning for duplication
+     * Check if Route for Duplication Names
+     * if the HTTP METHOD is not the same, then add $httpMethod string in the end of static::$name
      *
+     * @param string $name
+     * @param string $method
+     * @return void
+     */
+    private static function route_names_duplication_check($name = null, $httpMethod = null)
+    {
+        if(array_key_exists($name, static::$routes)) {
+            
+            if(static::$routes[$name]['method'] == $httpMethod) {
+                throw new \Exception('Duplicated route name '.$name.' has been found.');
+            }
+
+            static::$name .= '.'. strtolower($httpMethod);
+            
+        }
+    }
+
+    /**
+     * Generate Default Route Name
+     *
+     * @param string $uri
+     * @param mixed $callback
+     * @return void
+     */
+    private static function default_route_name($uri, $callback = null, $httpMethod = null)
+    {
+        // generate random name
+        // $bytes = random_bytes(16);
+        // $random_name = bin2hex($bytes);
+        // static::$name = $random_name;
+        
+        // static::$name = count(static::$routes) + 1;
+
+
+        if(is_callable($callback)) {
+            $callbackMethod = 'closure';
+        } else
+        // use e.g. SiteController@index
+        // like: Route::get('/home',SiteController@index)
+        if(!is_array($callback) && strpos($callback,'@') !== false) {
+            
+            list($className, $method) = explode('@',$callback);
+            // $className = "App\Http\Controllers\\".$className;
+            $callbackMethod = $method;
+
+        }  else
+        if(is_array($callback)) {
+            $callbackMethod = $callback[1];
+        }
+
+        
+        $prefix = str_replace('/', '.', static::$prefix);
+        
+        $prefix = ltrim($prefix, '.'); // Remove first character .
+
+        $prefix = !empty($prefix) ? $prefix  .'.' : '';
+
+        $uriExploded = explode('/', $uri);
+
+        if(empty($prefix)) {
+            foreach ($uriExploded as $key => $value) {
+                $value = str_replace(['{','}'],'',$value);
+                if(!empty($value)) {
+                    $prefix .=  $value . '.';
+                    break;
+                }
+            }
+        }
+
+        // $uriExploded = end($uriExploded);
+
+        $uriExploded = array_reverse($uriExploded);
+        foreach($uriExploded as $value) {
+            if (!str_contains($value, '{')) { 
+                $uriExploded = $value;
+                break;
+            }
+
+        }
+
+        $uriExploded = !empty($uriExploded) ? $uriExploded  .'.' : '';
+
+        $uriExploded = str_replace(['{','}'], '', $uriExploded);
+
+        $httpMethod = strtolower($httpMethod);
+
+        if($prefix === $uriExploded ) {
+            static::$name = $uriExploded . $callbackMethod;
+        } else {
+            static::$name = $prefix . $uriExploded . $callbackMethod;
+        }
+    }
+
+    /**
+     * Display a Route warning for duplication
+     * Same URI and METHOD
      */
     private static function route_warning_for_duplication($uri, $method = null)
     {
         foreach (static::$routes as $key => $value) {
-            if($value['uri'] != $uri) {
+            if($value['uri'] !== $uri) {
                 continue;
             }
             
-            if($value['uri'] === $uri && $value['method'] == $method) {
+            if($value['uri'] === $uri && $value['method'] === $method) {
                 
                 if(!config('app.debug')) {
                     break;
                 }
+
+                $warning = '<b>[Warning]</b> Duplicated Route [<b>'.$method.'</b> <b>'.$uri.'</b>] has been found at <b><a href="?edit='.Backtrace::get(3)->file.'" title="Click to edit the file">'.Backtrace::get(3)->file.'</a></b> on line <b>'.Backtrace::get(3)->line.'<br/>[Info]</b> The first registered route will be prioritize to load.';
                 
-                $warning = "[Warning] - Route duplication detected. The first registered route will be prioritize to load and the other will be ignored.";
-                $info1 = '[Info] - The route <b>'.$method.'</b> method with URI: <b>'.$uri.'</b> is already exists and you are about to add the same METHOD with same URI.';
-                $info2 = '[Info] - Duplicated route can be found at: <b>'.Backtrace::get(3)->file.'</b> on line <b>'.Backtrace::get(3)->line.'</b>';
+                echo '<div class="warning"><a href="#" class="warning_remove" >[X]</a><br>'.$warning.'</div>';
                 
-                echo $warning.'<br/>';
-                echo $info1.'<br/>';
-                echo $info2.'<br/>';
                 
                 break;   
             }
@@ -270,7 +364,7 @@ class Route
         
         // If the name is already been set on $routes[] array
         if(array_key_exists($key_name, static::$routes)) {
-            $msg = 'Duplicated route name:`'.$key_name.'` has been found at '.Backtrace::first()->file.' at line: '.Backtrace::first()->line;
+            $msg = 'Duplicated route named "'.$key_name.'" has been found at '.Backtrace::first()->file.' on line '.Backtrace::first()->line;
             throw new \Exception($msg);
         }
         
