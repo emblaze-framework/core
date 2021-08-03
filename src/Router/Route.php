@@ -183,7 +183,6 @@ class Route
         
         // static::$name = count(static::$routes) + 1;
 
-
         if(is_callable($callback)) {
             $callbackMethod = 'closure';
         } else
@@ -194,7 +193,7 @@ class Route
             list($className, $method) = explode('@',$callback);
             // $className = "App\Http\Controllers\\".$className;
             $callbackMethod = $method;
-
+           
         }  else
         if(is_array($callback)) {
             $callbackMethod = $callback[1];
@@ -234,13 +233,14 @@ class Route
 
         $uriExploded = str_replace(['{','}'], '', $uriExploded);
 
-        $httpMethod = strtolower($httpMethod);
+        // $httpMethod = strtolower($httpMethod);
 
         if($prefix === $uriExploded) {
             static::$name = $uriExploded . $callbackMethod;
         } else {
             static::$name = $prefix . $uriExploded . $callbackMethod;
         }
+        
     }
 
     /**
@@ -260,9 +260,9 @@ class Route
                     break;
                 }
 
-                $warning = '<b>[Warning]</b> Duplicated Route [<b>'.$method.'</b> <b>'.$uri.'</b>] has been found at <b><a href="?edit='.Backtrace::get(3)->file.'" title="Click to edit the file">'.Backtrace::get(3)->file.'</a></b> on line <b>'.Backtrace::get(3)->line.'<br/>[Info]</b> The first registered route will be prioritize to load.';
+                $warning = '<b>[Warning]</b> Duplicated Route [<b>'.$method.'</b> <b>'.$uri.'</b>] has been found at <b><a href="?edit='.Backtrace::get(3)->file.'" title="Click to edit the file">'.Backtrace::get(3)->file.'</a></b> on line <b>'.Backtrace::get(3)->line.'.</b> Take note that the first registered route will be prioritize to load.';
                 
-                echo '<div class="warning"><a href="#" class="warning_remove" >[X]</a><br>'.$warning.'</div>';
+                echo '<div class="warning"><a href="#" class="warning_remove" >[X]</a> '.$warning.'</div>';
                 
                 
                 break;   
