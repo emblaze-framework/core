@@ -295,7 +295,7 @@ class Route
                     break;
                 }
 
-                $warning = '<b>[Warning]</b> Duplicated Route [<b>'.$method.'</b> <b>'.$uri.'</b>] has been found at <b><a href="?edit='.Backtrace::get(3)->file.'" title="Click to edit the file">'.Backtrace::get(3)->file.'</a></b> on line <b>'.Backtrace::get(3)->line.'.</b> Take note that the first registered route will be prioritize to load.';
+                $warning = '<b>[Warning]</b> Duplicated route [<b>'.$method.'</b> <b>'.$uri.'</b>] has been found at <b><a href="?edit='.Backtrace::get(3)->file.'" title="Click to edit the file">'.Backtrace::get(3)->file.'</a></b> on line <b>'.Backtrace::get(3)->line.'.</b> Take note that the first registered route will be prioritize to load.';
                 
                 echo '<div class="warning"><a href="#" class="warning_remove" >[X]</a> '.$warning.'</div>';
                 
@@ -605,7 +605,7 @@ class Route
      */
     private static function remove_some_global_http_middleware_stack($ignore = [])
     {
-        $globalMiddleware = \App\Http\HttpCore::$globalMiddleware;
+        $globalMiddleware = \App\Http\Core::$globalMiddleware;
        
         foreach ($globalMiddleware as $key => $middleware) {
             if(is_int($key)) {
@@ -891,14 +891,14 @@ class Route
     // }
 
     /**
-     * This will execute Global Middleware stack from \App\Http\HttpCore;
+     * This will execute Global Middleware stack from \App\Http\Core;
      *
      * @return void
      */
     // protected static function executeGlobalMiddleware()
     // {
-    //     // Get list of global middleware stack from \App\Http\HttpCore;
-    //     $middlewares = \App\Http\HttpCore::$globalMiddleware;
+    //     // Get list of global middleware stack from \App\Http\Core;
+    //     $middlewares = \App\Http\Core::$globalMiddleware;
 
     //     // Loop through middleware class
     //     foreach($middlewares as $middleware) {
@@ -916,7 +916,7 @@ class Route
 
    
      /**
-      * This will execute Global Middleware stack from \App\Http\HttpCore;
+      * This will execute Global Middleware stack from \App\Http\Core;
       * and can be used to execute custom routes middlewares
       *
       * @param array $middlewares
@@ -925,8 +925,8 @@ class Route
       */
     protected static function executeMiddlewareStack($middlewares = [])
     {
-        // Get list of global middleware stack from \App\Http\HttpCore;
-        // $middlewares = \App\Http\HttpCore::$globalMiddleware;
+        // Get list of global middleware stack from \App\Http\Core;
+        // $middlewares = \App\Http\Core::$globalMiddleware;
 
         // Reverse the array of middlewares so that it will run from first to end.
         $middlewares = array_reverse($middlewares, true);
