@@ -195,8 +195,17 @@ class Route
             $callbackMethod = $method;
            
         }  else
+         // OR
+        // use e.g. [SiteController::class, 'function_method']
         if(is_array($callback)) {
             $callbackMethod = $callback[1];
+        } else
+        // OR
+        // use e.g. SiteController::class
+        if(!is_array($callback) && class_exists($callback) !== false) {
+            static::check_if_class_has_constructor($callback);
+            $callbackMethod = 'constructor';
+            
         }
 
         
@@ -241,6 +250,22 @@ class Route
             static::$name = $prefix . $uriExploded . $callbackMethod;
         }
         
+    }
+
+    /**
+     * Check if the class has __constructor
+     *
+     * @param mixed $className
+     * @return void
+     */
+    private static function check_if_class_has_constructor($className)
+    {
+        $class = new ReflectionClass($className);
+        $constructor = $class->getConstructor();
+
+        if (!$constructor) {
+            throw new \Exception($className.' has no __construct method.');
+        }
     }
 
     /**
@@ -299,7 +324,9 @@ class Route
         if(!is_array($callback) && strpos($callback,'@') !== false) {
             list($className, $method) = explode('@',$callback);
             
+            
             $className = "App\Http\Controllers\\".$className;
+
             
             // if class is not found throw error
             if(!class_exists($className)) { 
@@ -307,7 +334,7 @@ class Route
             }
             
             $a = new \ReflectionClass($className);
-
+            return $a->getFileName();
         }
 
         // OR
@@ -317,18 +344,24 @@ class Route
             // className is the controller
             $className = $callback[0];
 
-            if(class_exists($className)) {
-
-                $a = new \ReflectionClass($className);
-                
-            } else {
-                throw new \ReflectionException("Class ".$className." is not found.");
+             // if class is not found throw error
+             if(!class_exists($className)) { 
+                throw new \ReflectionException("class ".$className." is not found.");
             }
+
+            $a = new \ReflectionClass($className);
+            return $a->getFileName();
+            
         }
 
-       
-        return $a->getFileName();
-        // Output: e.g. C:\xampp7\htdocs\develop\Internal\Database\DB\InternalDB.php
+        // OR
+        // use e.g. SiteController::class
+        if(!is_array($callback) && class_exists($callback) !== false) {
+
+            $a = new \ReflectionClass($callback);
+            return $a->getFileName();
+        }
+
     }
 
     /**
@@ -566,12 +599,13 @@ class Route
 
         // Check if the route is active
         if(!$route['active']) {
+            // Need to update the view display of this error soon.
             echo 'Sorry, This route is currently disabled';
             die();
         }
         
         /** 
-         * EXECUTE GLOBAL MIDDLEWARE FIRST BEFORE TRIGGERING THE other routes middleware
+         * EXECUTE GLOBAL HTTP MIDDLEWARE STACK FIRST BEFORE TRIGGERING THE OTHER ROUTES MIDDLEWARE
         */
         // static::executeGlobalMiddleware_v2();
         static::executeMiddlewareStack(\App\Http\HttpCore::$globalMiddleware, static::$request);
@@ -586,16 +620,18 @@ class Route
 
         $callback = $route['callback'];
 
-        
+        // Closure: function callback        
         if(is_callable($callback)) {
             return call_user_func_array($callback, $params);
         }
 
+        // String callback Seperated with @ symbol.
         // use e.g. SiteController@index
         // like: Route::get('/home',SiteController@index)
         if(!is_array($callback) && strpos($callback,'@') !== false) {
             list($className, $method) = explode('@',$callback);
             
+            // Need to update this soon, so that the App\Http\Controllers can be Dynamnic.
             $className = "App\Http\Controllers\\".$className;
 
             // if class is not found throw error
@@ -616,7 +652,7 @@ class Route
 
         }
 
-        // OR
+        // OR: Array [ControllerClassName, ControllerMethod]
         // use e.g. [SiteController::class, 'method']
         // like: Route::get('/home',[SiteController::class, 'index'])
         if(is_array($callback)) {
@@ -642,6 +678,19 @@ class Route
             } else {
                 throw new \ReflectionException("Class ".$className." is not found.");
             }
+        }
+
+        // OR: Direct Class Name
+        // use e.g. SiteController::class
+        if(!is_array($callback) && class_exists($callback) !== false) {
+            
+            static::check_if_class_has_constructor($callback);
+            
+            // Need to update this soon so that we can use a Dependency Injection here.
+            // Notes: Class __construct() should be set to public.
+            // This will triggered the __construct method of the Controller.
+            $newInstance = new $callback();
+            
         }
       
     }
