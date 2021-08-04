@@ -79,7 +79,16 @@ class Route
      */
     private static $code_line = 0;
 
+    /**
+     * Http Method e.g. GET,POST,DELETE,PATCH,UDPATE
+     *
+     * @var string
+     */
     private static $httpMethod;
+
+    private static $middlewareIgnore = [];
+
+
 
     /**
      * Route constructor
@@ -128,6 +137,7 @@ class Route
                 'callback' => $callback,
                 'method' => $httpMethod,
                 'middleware' => static::$routeMiddlewares,
+                'middleware_ignore' => static::$middlewareIgnore,
                 'active' => true,
                 'status' => 'Active',
                 'name' => static::$name,
@@ -600,15 +610,42 @@ class Route
         // Check if the route is active
         if(!$route['active']) {
             // Need to update the view display of this error soon.
-            echo 'Sorry, This route is currently disabled';
+            // dump($route);
+            // die();
+            echo 'Sorry, This route: ['.$route['uri'].'] is currently disabled';
             die();
         }
+
+        /** Removing Some Global HTTP Middleware Stack */
+        $globalMiddleware = \App\Http\HttpCore::$globalMiddleware;
+       
+        foreach ($globalMiddleware as $key => $middleware) {
+            if(is_int($key)) {
+                $class = new ReflectionClass($middleware);
+                
+                $full = $class->getName(); // e.g. App\Http\Middleware\PreventRequestsDuringMaintenance
+          
+                $name = $class->getShortName(); // name of class e.g. PreventRequestsDuringMaintenance
+                
+                if(in_array($name , static::$middlewareIgnore, true)) {
+                    // remove it to global http middleware stack.
+                    unset($globalMiddleware[$key]);
+                }
+
+                if(in_array($full, static::$middlewareIgnore, true)) {
+                    // remove it to global http middleware stack.
+                    unset($globalMiddleware[$key]);
+                }
+            }
+            
+        }
+        /** Removing Some Global HTTP Middleware Stack */
         
         /** 
          * EXECUTE GLOBAL HTTP MIDDLEWARE STACK FIRST BEFORE TRIGGERING THE OTHER ROUTES MIDDLEWARE
         */
         // static::executeGlobalMiddleware_v2();
-        static::executeMiddlewareStack(\App\Http\HttpCore::$globalMiddleware, static::$request);
+        static::executeMiddlewareStack($globalMiddleware, static::$request);
         
         /** 
          * EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
@@ -774,9 +811,7 @@ class Route
         
         return $params;
     }
-    
 
-    
     /**
      * Execute routes middleware
      * 
@@ -907,4 +942,27 @@ class Route
     {
         return static::$routes;
     }
+
+
+    /**
+     * Add ignore from $middlewareIgnore
+     *
+     * @param mixed $middlewares
+     * @return void
+     */
+    public function middleware_ignore($middlewares = null)
+    {
+        if(is_array($middlewares)) {
+            foreach($middlewares as $middleware) {
+                static::$middlewareIgnore[] = $middleware;
+            }
+            
+        } else 
+        if(is_string($middlewares)) {
+            static::$middlewareIgnore[] = $middlewares;
+        }
+        
+        static::$routes[static::$name]['middleware_ignore'] = static::$middlewareIgnore;
+    }
+
 }
