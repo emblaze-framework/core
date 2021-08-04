@@ -636,6 +636,12 @@ class Route
                     // remove it to global http middleware stack.
                     unset($globalMiddleware[$key]);
                 }
+            } else
+            if(is_string($key)) {
+                if(in_array($key , static::$middlewareIgnore, true)) {
+                    // remove it to global http middleware stack.
+                    unset($globalMiddleware[$key]);
+                }
             }
             
         }
