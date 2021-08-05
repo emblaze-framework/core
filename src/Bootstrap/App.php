@@ -124,7 +124,7 @@ class App extends Container
          * This will add all web.php get, post routes
          * and api routes.
          */
-        File::require_directory('routes');
+        File::require_directory('routes',false);
 
         /**
          * Handle Routers

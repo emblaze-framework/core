@@ -20,7 +20,7 @@ use Emblaze\Middleware\MiddlewareStack;
 class Route
 {
      /**
-     * Self instance
+     * Self instance $route
      * 
      */
     private static $route;
@@ -37,7 +37,6 @@ class Route
     /**
      * Route Middleware
      * 
-     * e.g. Route::middleware('Admin|Owner', function() {})
      * 
      * @var string $middleware
      */
@@ -68,27 +67,30 @@ class Route
     /**
      * Route Name
      *
-     * @var string
+     * @var string $name
      */
     private static $name = '';
 
     /**
      * Code Line
      *
-     * @var integer
+     * @var integer $code_line
      */
     private static $code_line = 0;
 
     /**
      * Http Method e.g. GET,POST,DELETE,PATCH,UDPATE
      *
-     * @var string
+     * @var string $httpMethod
      */
     private static $httpMethod;
 
+    /**
+     * MiddlewareIgnore List.
+     *
+     * @var array $middlewareIgnore
+     */
     private static $middlewareIgnore = [];
-
-
 
     /**
      * Route constructor
@@ -131,11 +133,15 @@ class Route
 
             static::route_names_duplication_check(static::$name, $httpMethod);
             
+            // get the basename of filename from routes folder e.g. api or web
+            $type = basename(Backtrace::clean_for_route()->file, ".php");
+
             // Register/Add New Routes
             static::$routes[static::$name] = [
                 'uri' => $uri,
                 'callback' => $callback,
                 'method' => $httpMethod,
+                'type' => $type,
                 'middleware' => static::$routeMiddlewares,
                 'middleware_ignore' => static::$middlewareIgnore,
                 'active' => true,
@@ -147,7 +153,7 @@ class Route
                     'controller_code_line' => static::$code_line,
                     'route_path' => Backtrace::get(2)->file,
                     'route_code_line' => Backtrace::get(2)->line,
-                ]
+                ],
             ];
 
         }
@@ -606,32 +612,34 @@ class Route
     private static function remove_some_global_http_middleware_stack($ignore = [])
     {
         $globalMiddleware = \App\Http\Core::$globalMiddleware;
-       
-        foreach ($globalMiddleware as $key => $middleware) {
-            if(is_int($key)) {
-                $class = new ReflectionClass($middleware);
-                
-                $full = $class->getName(); // e.g. App\Http\Middleware\PreventRequestsDuringMaintenance
-          
-                $name = $class->getShortName(); // name of class e.g. PreventRequestsDuringMaintenance
-                
-                if(in_array($name, $ignore, true)) {
-                    // remove it to global http middleware stack.
-                    unset($globalMiddleware[$key]);
-                }
 
-                if(in_array($full, $ignore, true)) {
-                    // remove it to global http middleware stack.
-                    unset($globalMiddleware[$key]);
-                }
-            } else
-            if(is_string($key)) {
-                if(in_array($key , $ignore, true)) {
-                    // remove it to global http middleware stack.
-                    unset($globalMiddleware[$key]);
+        // Check if ignore is not empty.
+        if(!empty($ignore)) {
+            foreach ($globalMiddleware as $key => $middleware) {
+                if(is_int($key)) {
+                    $class = new ReflectionClass($middleware);
+                    
+                    $full = $class->getName(); // e.g. App\Http\Middleware\PreventRequestsDuringMaintenance
+              
+                    $name = $class->getShortName(); // name of class e.g. PreventRequestsDuringMaintenance
+                    
+                    if(in_array($name, $ignore, true)) {
+                        // remove it to global http middleware stack.
+                        unset($globalMiddleware[$key]);
+                    }
+    
+                    if(in_array($full, $ignore, true)) {
+                        // remove it to global http middleware stack.
+                        unset($globalMiddleware[$key]);
+                    }
+                } else
+                if(is_string($key)) {
+                    if(in_array($key , $ignore, true)) {
+                        // remove it to global http middleware stack.
+                        unset($globalMiddleware[$key]);
+                    }
                 }
             }
-            
         }
 
         return $globalMiddleware;
@@ -664,6 +672,7 @@ class Route
         */
         // static::executeGlobalMiddleware_v2();
         static::executeMiddlewareStack($globalMiddleware, static::$request);
+        
         
         /** 
          * EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK

@@ -93,12 +93,12 @@ class File
     }
 
     /**
-     * Required directory
+     * Required all files in directory and in (optional)subdirectories
      * 
      * @param string $path
      * @return mixed
      */
-    public static function require_directory($path)
+    public static function require_directory($path, $include_subdirectories = true)
     {
         // array_diff will exclude the '.', and '..' on array.
         $files = array_diff(scandir(static::path($path)),['.','..']);
@@ -116,9 +116,13 @@ class File
             
             // Checking whether a file is directory or not
             if (is_dir($full_file_path)) {
-                // if the file is directory then rerun this require_directory function
-                // re-run 
-                self::require_directory($file_path);
+                
+                // if the file is directory  and "$include_subdirectories == true" then rerun this require_directory function
+                if($include_subdirectories) {
+                    // re-run
+                    self::require_directory($file_path, $include_subdirectories);
+                }
+                
                
             }  else {
                 if(static::exist($file_path)) {
@@ -128,4 +132,5 @@ class File
             }
         }
     }
+    
 }
