@@ -81,8 +81,6 @@ class App extends Container
         // Initialize Whoops if debug is set to TRUE
         config('app.debug') ? Whoops::handle() : null;
         
-        // Start Session
-        Session::start();
 
         // Instantiate Cookie CsrfToken
         new \Emblaze\Cookie\CsrfToken();

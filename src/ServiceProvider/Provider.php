@@ -33,5 +33,6 @@ class Provider
             // trigger the register method and inject the App instance.
             $providerInstance->register(app());
         }
+        
     }
 }

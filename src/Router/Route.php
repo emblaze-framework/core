@@ -98,7 +98,9 @@ class Route
      * @return void
      */
     public function __construct(Request $request, Response $response) {
+        
         self::$request = $request;
+        
         self::$response = $response;
 
         self::$route = $this;
@@ -122,7 +124,7 @@ class Route
         $uri = rtrim(static::$prefix . '/' . $uri, '/');
 
         $uri = $uri?:'/';
-
+        
         static::route_warning_for_duplication($uri, $methods);
         
         foreach (explode('|', $methods) as $httpMethod) {    
@@ -192,13 +194,7 @@ class Route
      */
     private static function default_route_name($uri, $callback = null, $httpMethod = null)
     {
-        // generate random name
-        // $bytes = random_bytes(16);
-        // $random_name = bin2hex($bytes);
-        // static::$name = $random_name;
         
-        // static::$name = count(static::$routes) + 1;
-
         if(is_callable($callback)) {
             $callbackMethod = 'closure';
         } else
@@ -211,7 +207,7 @@ class Route
             $callbackMethod = $method;
            
         }  else
-         // OR
+        // OR
         // use e.g. [SiteController::class, 'function_method']
         if(is_array($callback)) {
             $callbackMethod = $callback[1];
@@ -642,6 +638,38 @@ class Route
     }
 
     /**
+     * This will handle all middleware execution.
+     *
+     * @param mixed $route
+     * @return void
+     */
+    protected static function handle_execution_of_middleware($route = null)
+    {
+        /** Removing Some Global HTTP Middleware Stack */
+        $globalMiddleware = static::remove_some_global_http_middleware_stack($route['middleware_ignore']);
+        /** Removing Some Global HTTP Middleware Stack */
+
+        
+        /** 
+         * EXECUTE GLOBAL HTTP MIDDLEWARE STACK FIRST BEFORE TRIGGERING THE OTHER ROUTES MIDDLEWARE
+        */
+        // static::executeGlobalMiddleware_v2();
+        static::executeMiddlewareStack($globalMiddleware, static::$request);
+
+
+        /** 
+         * EXECUTE MIDDLEWARE GROUPS HERE:
+        */
+        static::executeMiddlewareStack(\App\Http\Core::$middlewareGroups[$route['type']], static::$request);
+
+        
+        /** 
+         * EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
+        */
+        static::executeRouteMiddleware($route, static::$request);
+    }
+
+    /**
      * Invoke the route
      * 
      * @param array $route
@@ -659,36 +687,10 @@ class Route
             die();
         }
 
-        /** Removing Some Global HTTP Middleware Stack */
-        $globalMiddleware = static::remove_some_global_http_middleware_stack($route['middleware_ignore']);
-        /** Removing Some Global HTTP Middleware Stack */
-        
-        /** 
-         * EXECUTE GLOBAL HTTP MIDDLEWARE STACK FIRST BEFORE TRIGGERING THE OTHER ROUTES MIDDLEWARE
-        */
-        // static::executeGlobalMiddleware_v2();
-        static::executeMiddlewareStack($globalMiddleware, static::$request);
-
-        
-        if($route['type'] === 'web') {
-            /** 
-             * EXECUTE WEB MIDDLEWARE GROUPS HERE:
-            */
-        }
-        
-        if($route['type'] === 'api') {
-           /** 
-             * EXECUTE API MIDDLEWARE GROUPS HERE:
-            */
-        }
-        
-        /** 
-         * EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
-        */
-        static::executeRouteMiddleware($route, static::$request);
-
+        // Execute middleware.
+        // This will handle the execution of middleware
+        static::handle_execution_of_middleware($route);
         // -----------------------------------------------------------
-
 
         $callback = $route['callback'];
 
@@ -861,7 +863,9 @@ class Route
         
         foreach($middlewareNames as $middleware) {
             if($middleware != '') {
+
                 $middleware = 'App\Http\Middleware\\'.$middleware;
+
                 if(class_exists($middleware)) {
                     // $object = new $middleware;
 
@@ -877,67 +881,17 @@ class Route
         }
 
         // This will return a new request from custom routes middlewares. e.g. Admin, Owner Middlewares.
-        // $request = static::executeMiddlewareStack($newMiddlewareStack, $request);
+        // $request = static::executeMiddlewareStack($newMiddlewareStack);
         // return $request;
-        return static::executeMiddlewareStack($newMiddlewareStack, static::$request);
+        return static::executeMiddlewareStack($newMiddlewareStack);
     }
-
-  
-    /**
-     * Execute middleware
-     * 
-     * @param array $routes
-     */
-    // protected static function executeMiddleware($route)
-    // {
-    //     $middlewareNames = explode('|',$route['middleware']);
-        
-    //     foreach($middlewareNames as $middleware) {
-    //         if($middleware != '') {
-    //             $middleware = 'App\Http\Middleware\\'.$middleware;
-    //             if(class_exists($middleware)) {
-    //                 $object = new $middleware;
-    //                 // trigger the handle method from Middleware
-    //                 call_user_func_array([$object, 'handle'],[]);
-                    
-    //             } else {
-    //                 throw new \ReflectionException("class ".$middleware." does not exists.");
-    //             }
-    //         }
-    //     }
-    // }
-
-    /**
-     * This will execute Global Middleware stack from \App\Http\Core;
-     *
-     * @return void
-     */
-    // protected static function executeGlobalMiddleware()
-    // {
-    //     // Get list of global middleware stack from \App\Http\Core;
-    //     $middlewares = \App\Http\Core::$globalMiddleware;
-
-    //     // Loop through middleware class
-    //     foreach($middlewares as $middleware) {
-    //         // if that class exists
-    //         if(class_exists($middleware)) {
-    //             // create new instance of that class
-    //             $object = new $middleware;
-    //             // trigger the handle method from Middleware
-    //             call_user_func_array([$object, 'handle'],[]);
-    //         } else {
-    //             throw new \ReflectionException("class ".$middleware." does not exists.");
-    //         }
-    //     }
-    // }
 
    
      /**
-      * This will execute Global Middleware stack from \App\Http\Core;
+      * This will execute Global HTTP Middleware stack from \App\Http\Core;
       * and can be used to execute custom routes middlewares
       *
       * @param array $middlewares
-      * @param Request $request
       * @return mixed
       */
     protected static function executeMiddlewareStack($middlewares = [])
