@@ -623,15 +623,11 @@ class Route
               
                     $name = $class->getShortName(); // name of class e.g. PreventRequestsDuringMaintenance
                     
-                    if(in_array($name, $ignore, true)) {
+                    if(in_array($name, $ignore, true) || in_array($full, $ignore, true)) {
                         // remove it to global http middleware stack.
                         unset($globalMiddleware[$key]);
                     }
-    
-                    if(in_array($full, $ignore, true)) {
-                        // remove it to global http middleware stack.
-                        unset($globalMiddleware[$key]);
-                    }
+                    
                 } else
                 if(is_string($key)) {
                     if(in_array($key , $ignore, true)) {
@@ -672,7 +668,19 @@ class Route
         */
         // static::executeGlobalMiddleware_v2();
         static::executeMiddlewareStack($globalMiddleware, static::$request);
+
         
+        if($route['type'] === 'web') {
+            /** 
+             * EXECUTE WEB MIDDLEWARE GROUPS HERE:
+            */
+        }
+        
+        if($route['type'] === 'api') {
+           /** 
+             * EXECUTE API MIDDLEWARE GROUPS HERE:
+            */
+        }
         
         /** 
          * EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
