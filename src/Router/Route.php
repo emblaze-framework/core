@@ -250,17 +250,37 @@ class Route
 
         }
 
-        $uriExploded = !empty($uriExploded) ? $uriExploded  .'.' : '';
+        $uriExploded = !empty($uriExploded) ? $uriExploded  . '.' : '';
 
         $uriExploded = str_replace(['{','}'], '', $uriExploded);
 
         // $httpMethod = strtolower($httpMethod);
 
+       
+
         if($prefix === $uriExploded) {
+           
+            // $check = $callbackMethod.'.';
+            // if($check == $prefix) {
+            //     static::$name = trim($uriExploded,'.');
+            // } else {
+            //     static::$name = $uriExploded . $callbackMethod;
+            // }
             static::$name = $uriExploded . $callbackMethod;
+            
         } else {
-            static::$name = $prefix . $uriExploded . $callbackMethod;
+           
+            $check = $callbackMethod.'.';
+            if($check == $uriExploded) {
+
+                static::$name = trim($prefix . $uriExploded,'.'); 
+               
+            } else {
+                static::$name = $prefix . $uriExploded . $callbackMethod;
+            }
+            
         }
+        
         
     }
 
