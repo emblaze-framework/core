@@ -46,6 +46,27 @@ if(! function_exists('view')) {
     }
 }
 
+if(! function_exists('viewblade')) {
+    /**
+     * This View Blade render, you can now directly called a viewblade() function to trigger the View::render
+     * So if you are using View::bladeRender($path,$data), now you can use viewblade($path,$data)
+     * 
+     * We can use the standalone version of Laravel's Blade templating engine
+     * e.g. https://github.com/jenssegers/blade
+     */
+    /**
+     * View Blade render
+     * 
+     * @param string $path
+     * @param array $data
+     * 
+     * @return mixed
+     */
+    function viewblade($path, $data = []) {
+        return Emblaze\View\View::bladeRender($path,$data);
+    }
+}
+
 
 if(! function_exists('request')) {
     /**

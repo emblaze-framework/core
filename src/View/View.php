@@ -11,6 +11,7 @@ namespace Emblaze\View;
 
 use Emblaze\File\File;
 use Jenssegers\Blade\Blade;
+use Emblaze\Debug\Backtrace;
 use Emblaze\Session\Session;
 
 class View
@@ -23,6 +24,8 @@ class View
 
     public static function render($path, $data = [])
     {
+
+
         /**
          * flash errors that came from Emblaze\Validation\Validate
          */
@@ -37,6 +40,8 @@ class View
 
         // OR Render using our custom Render
         return static::viewRender($path, $data);
+
+        
     }
 
     /**

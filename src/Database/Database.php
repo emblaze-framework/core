@@ -15,6 +15,7 @@ use PDOException;
 use Emblaze\Url\Url;
 use Emblaze\File\File;
 use Emblaze\Http\Request;
+use Emblaze\Bootstrap\App;
 
 class Database
 {
@@ -129,11 +130,21 @@ class Database
     private static function connect()
     {
         if(! static::$connection) {
+            
             // Get database config file
-            $database_config = File::require_file('config/database.php');
+            // $database_config = File::require_file('config/database.php');
+            
             // extract() will convert the associative array names to be variable names with there value.
             // e.g. 'host'=>'127.0.0.1' will be $host = '127.0.0.1'
-            extract($database_config);
+            
+            extract(App::$app->config['database']);
+
+            // $driver = '';
+            // $host = '';
+            // $port = '';
+            // $database = '';
+            // $username = '';
+            // $password = '';
 
             // dsn setting
             $dsn = $driver.":host=".$host.";port=".$port.";dbname=".$database;
@@ -155,6 +166,21 @@ class Database
             }
             
         }
+    }
+
+    /**
+     * Get connecition.
+     *
+     * @return mixed
+     */
+    public static function connection()
+    {
+        // This will create a new instance of PDO Object
+        static::connect();
+        if(!self::$instance) {
+            self::$instance = new Database($table = null);
+        }
+        return static::$connection;
     }
 
     /**
