@@ -106,6 +106,9 @@ class Migration
             // this will insert all of the $str to `migration` 
             $statement = $pdo->prepare("INSERT INTO `migrations` (`migration`) VALUES $str;");
 
+            // $newRecord = Database::table('users')->insert($data);
+
+
             $statement->execute();
             
         } else {

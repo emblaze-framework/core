@@ -117,10 +117,12 @@ class Database
     protected static $binding;
     
 
-    /**
-     * Database constructor
-     */
-    private function __construct($table) {
+     /**
+      * Database constructor
+      *
+      * @param string $table
+      */
+    private function __construct($table = null) {
         static::$table = $table;
     }
 
@@ -168,17 +170,20 @@ class Database
         }
     }
 
-    /**
+    
+
+     /**
      * Get connecition.
-     *
+     * 
+     * @param string $table
      * @return mixed
      */
-    public static function connection()
+    public static function connection($table = null)
     {
         // This will create a new instance of PDO Object
         static::connect();
         if(!self::$instance) {
-            self::$instance = new Database($table = null);
+            self::$instance = new Database($table);
         }
         return static::$connection;
     }
@@ -192,6 +197,7 @@ class Database
         static::connect();
         
         $table = static::$table;
+        
         if(!self::$instance) {
             self::$instance = new Database($table);
         }
