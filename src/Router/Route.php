@@ -148,15 +148,19 @@ class Route
                 'middleware_ignore' => static::$middlewareIgnore,
                 'active' => true,
                 'status' => 'Active',
-                'name' => static::$name,
-                'config' => [
+                'name' => static::$name
+            ];
+
+            // If development environment then add 'config' from $routes
+            if(config('app.environment') == 'development') {
+                static::$routes[static::$name]['config'] = [
                     'prefix' => static::$prefix,
                     'controller_path' => $controller_path,
                     'controller_code_line' => static::$code_line,
                     'route_path' => Backtrace::get(2)->file,
                     'route_code_line' => Backtrace::get(2)->line,
-                ],
-            ];
+                ];
+            }
 
         }
 
