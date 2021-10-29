@@ -131,7 +131,9 @@ if(! function_exists('url')) {
     function url($path) {
         
         if(array_key_exists($path, Emblaze\Router\Route::$routes)) {
+            
             $route = (object)Emblaze\Router\Route::$routes[$path];
+          
             return Emblaze\Url\Url::path($route->uri);    
         }
 

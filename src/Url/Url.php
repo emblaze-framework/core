@@ -27,7 +27,9 @@ class Url
      */
     public static function path($path)
     {
-        return Request::baseUrl().'/'.trim($path,'/');
+        
+        // return Request::baseUrl().'/'.trim($path,'/');
+        return Request::baseUrl().trim($path,'/');
     }
 
     /**

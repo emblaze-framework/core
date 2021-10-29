@@ -105,10 +105,14 @@ class Request
      */
     public static function handle()
     {   
+        
+       
+
         // "SCRIPT_NAME" => "/public/index.php"
         static::$script_name = str_replace('\\','',dirname(Server::get('SCRIPT_NAME')));
      
         static::setBaseUrl();
+        
         static::setUrl();
 
         return self::$request;
@@ -122,8 +126,10 @@ class Request
      */
     private static function setBaseUrl()
     {
+      
         // http://example.web
-        $REQUEST_SCHEME = Server::has('REQUEST_SCHEME') ? Server::get('HTTP_HOST') : 'http'; //-> e.g. http
+        $REQUEST_SCHEME = Server::has('REQUEST_SCHEME') ? Server::get('REQUEST_SCHEME') : 'http'; //-> e.g. http
+        
         $protocol = $REQUEST_SCHEME . '://'; //-> e.g. http://
 
         $HTTP_HOST = Server::has('HTTP_HOST') ? Server::get('HTTP_HOST') : 'localhost'; //-> e.g. example.web
@@ -132,6 +138,8 @@ class Request
         $script_name = static::$script_name; //-> e.g. /public
 
         static::$base_url = $protocol . $host . $script_name; //-> e.g. http://example.web
+        
+   
     }
 
     /**
@@ -141,13 +149,16 @@ class Request
      */
     private static function setUrl()
     {
+        
         // e.g. "REQUEST_URI" => "/public/index.php" or "/public/index.php?id=1&name=John"
         $request_uri = urldecode(Server::get('REQUEST_URI'));
+
 
         // e.g static::$script_name = "/public"
         // now using preg_replace the "/public" will be remove from $request_uri
         // so the $request_uri will now be "/index.php" or "/index.php?id=1&name=John"
-        $request_uri = preg_replace("#^" . static::$script_name . '#', '', $request_uri);
+        // $request_uri = preg_replace("#^" . static::$script_name . '#', '', $request_uri);
+
 
         // rtrim() function removes whitespace or other predefined characters from the right side of a string.
         $request_uri = rtrim($request_uri, '/');
@@ -161,6 +172,7 @@ class Request
         }
         
         static::$url = $request_uri?:"/";
+
         static::$query_string = $query_string ?? null;
     }
 
