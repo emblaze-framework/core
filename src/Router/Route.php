@@ -9,6 +9,7 @@
  */
 namespace Emblaze\Router;
 
+use stdClass;
 use ReflectionClass;
 use Emblaze\View\View;
 use Emblaze\Http\Request;
@@ -626,19 +627,35 @@ class Route
     {
         // this will get the current requested uri e.g. /users/1/edit
         $uri = Request::url();
-        
+       
+       
         // manipulate params e.g. /users/{params_id}/edit or /users/{params1}/{params2}/save
         foreach(static::$routes as $route) {
+
+            // continue process here
             $matched = true;
             
             $replace_with = "/(.*?)";
+
+            preg_match_all('/{.*?}/',$route['uri'], $matches);
+            $params = array_values($matches);
+           
+            $named = array();
             
-            // preg_replace will replace the "users/{params_id}/edit" into e.g. "users/(.*?)/edit"
+            for ($i=0; $i < count($params[0]); $i++) { 
+                $params[0][$i] = str_replace('{','',$params[0][$i]);
+                $params[0][$i] = str_replace('}','',$params[0][$i]);
+
+                // add the named parameter and initialize with null value.
+                $named[$params[0][$i]] = null;
+            }
+            
+            // preg_replace will replace the ( e.g. "users/{params_id}/edit" ) into ( e.g. "users/(.*?)/edit" )
             $route['uri'] = preg_replace('/\/{(.*?)}/',$replace_with, $route['uri']);
             
             // e.g. #^/users/(.*?)/edit$#
             $route['uri'] = '#^' . $route['uri'] . '$#';
-            
+           
             // preg_match will find the matched routes
             if(preg_match($route['uri'], $uri, $matches)) {
                 /**
@@ -654,10 +671,18 @@ class Route
 
                 $params = array_values($matches);
                 
-                foreach($params as $param) {
-                    if(strpos($param, '/')) {
-                        $matched = false;
-                    }
+                // foreach($params as $param) {
+                    
+                //     if(strpos($param, '/')) {
+                //         $matched = false;
+                //     }
+                // }
+
+                $i = 0;
+                foreach ($named as $key => $value) {
+                    // assigned the value of parameter to its named params.
+                    $named[$key] = $params[$i];
+                    $i++;
                 }
 
                 // Check if the $route['method'] is not equal to current client user Request method request.
@@ -665,9 +690,12 @@ class Route
                     $matched = false;
                 }
 
+
                 if($matched == true) {
-                    return static::invoke($route,$params);
+                    return static::invoke($route, $params, $named);
+                    break;
                 }
+                
             }
         }
 
@@ -751,7 +779,7 @@ class Route
      * @param array $route
      * @param array $params
      */
-    public static function invoke($route, $params = [])
+    public static function invoke($route, $params = [], $named_params = [])
     {
 
         // Check if the route is active
@@ -798,7 +826,7 @@ class Route
 
             // Before calling the controller method we need to check/build what is the 
             // required parameters from that method.
-            $params = static::buildMethodParameters($className, $method, $params);
+            $params = static::buildMethodParameters($className, $method, $params, $named_params);
             
             return call_user_func_array([$object, $method], $params);
 
@@ -820,7 +848,7 @@ class Route
                 if(method_exists($object, $method)) {
 
                     // Before calling the controller method we need to check/build what is the required parameters from that method.
-                    $params = static::buildMethodParameters($className, $method, $params);
+                    $params = static::buildMethodParameters($className, $method, $params, $named_params);
 
                     // Trigger the method from $className and pass $params
                     return call_user_func_array([$object, $method], $params);
@@ -859,13 +887,26 @@ class Route
      * @param mixed $response
      * @return mixed
      */
-    protected static function buildMethodParameters($className, $controllerMethod, $params = [])
+    protected static function buildMethodParameters($className, $controllerMethod, $params = [], $named_params)
     {
 
         // Create a reflection of the class
         $reflector = new ReflectionClass($className);
 
         $methods = $reflector->getMethods();
+
+        // ignore this types for now.
+        $typeList = [
+            'array' => array(),
+            'callable' => function(){},
+            'bool' => false,
+            'float' => 0.0,
+            'int' => 0,
+            'string' => '',
+            'iterable' => [],
+            'object' => new stdClass(),
+            'mixed' => 0, // any
+        ];
 
         
         foreach($methods as $method) {
@@ -880,73 +921,71 @@ class Route
                     return $params;
                 }
 
-
                 foreach($methodParameters as $dependency) {
                     
                     // $name = $dependency->name;
                     $position = $dependency->getPosition();
 
                     $type = $dependency->getType();
-
-                    // ignore this types for now.
-                    $typeList = [
-                        'array',
-                        'callable',
-                        'bool',
-                        'float',
-                        'int',
-                        'string',
-                        'iterable',
-                        'object',
-                        'mixed',
-                    ];
-
-                    // the type is declared, so we need to check it.
-                    if(in_array($type,$typeList)) {
-                        $params[$position] = $params[$position] ?? null;
-                        continue;
-                    }
-
-                    // type are not declared.
-                    if(!$type) {
-                        $params[$position] = $params[$position] ?? null;
-                        continue;
-                    }
                     
-                    if(!is_null($type)) {
+                    if(array_key_exists($dependency->name, $named_params)) {
+                        $params[$position] = $named_params[$dependency->name];
+                        continue;
                         
-                        $class = $type->getName(); 
+                    } else {
+                        // the type is declared, so we need to check it.
 
-                       
-                        // Emblaze Request and Response should always be automatically added to params. 
-                        // this is a given params to controller method.
-                        // if Emblaze\Http\Request 
-                        // This is automatically injected,
-                        if($class == 'Emblaze\Http\Request') {
+                        if(array_key_exists(strval($type), $typeList)) {
+                            // $params[$position] = $params[$position] ?? null;
+                            // echo "TYPE DECLARED: ".$dependency->name;
+                            $params[$position] = $typeList[strval($type)];
+                            continue;
+                        }
+
+                        // type are not declared.
+                        if(!$type) {
+                            // $params[$position] = $params[$position] ?? null;
+                            // echo "TYPE NOT DECLARED: ".$dependency->name;
+                            $params[$position] = null;
+                            continue;
+                        }
+                        
+                        if(!is_null($type)) {
                             
-                            $params[$position] = static::$request;
-                            continue;
-                        }
+                            $class = $type->getName(); 
 
-                        if($class == 'Emblaze\Http\Response') {
-                           
-                            $params[$position] = static::$response;
-                            continue;
-                        }
-                       
+                            // Emblaze Request and Response should always be automatically added to params. 
+                            // this is a given params to controller method.
+                            // if Emblaze\Http\Request 
+                            // This is automatically injected,
+                            if($class == 'Emblaze\Http\Request') {
+                                
+                                $params[$position] = static::$request;
+                                continue;
+                            }
 
-                        // check if the $class is not yet added to your container,
-                        if(!App::$app->get($class)) {
-                            throw new \Exception('This '.$class.' is not yet added to your container, please bind it first.');
-                        }
-
-                        // resolve the class and get the instance.
-                        $resolveClass = App::$app->resolve($class);
+                            if($class == 'Emblaze\Http\Response') {
+                            
+                                $params[$position] = static::$response;
+                                continue;
+                            }
                         
-                        // set the resolve class instance to its controller method parameter position
-                        $params[$position] = $resolveClass;
 
-                    }  
+                            // check if the $class is not yet added to your container,
+                            if(!App::$app->get($class)) {
+                                throw new \Exception('This '.$class.' is not yet added to your container, please bind it first.');
+                            }
+
+                            // resolve the class and get the instance.
+                            $resolveClass = App::$app->resolve($class);
+                            
+                            // set the resolve class instance to its controller method parameter position
+                            $params[$position] = $resolveClass;
+
+                        }   
+                    }
+
+                     
                                     
                 }
                 
