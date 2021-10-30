@@ -203,6 +203,7 @@ class Request
      */
     public static function query_string()
     {
+        // return static::$query;
         return static::$query_string;
     }
 

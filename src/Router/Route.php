@@ -275,11 +275,24 @@ class Route
         } else {
            
             $check = $callbackMethod.'.';
+           
             if($check == $uriExploded) {
 
                 static::$name = trim($prefix . $uriExploded,'.'); 
                
             } else {
+
+                $prefixCheck = explode('.', $prefix);
+
+                for ($i=0; $i < count($prefixCheck); $i++) { 
+                   
+                    if($uriExploded === ($prefixCheck[$i].'.')) {
+                        unset($prefixCheck[$i]);
+                    }
+                }
+
+                $prefix = implode('.', $prefixCheck);
+
                 static::$name = $prefix . $uriExploded . $callbackMethod;
             }
             
@@ -471,6 +484,7 @@ class Route
 
     /**
      * Add new GET route
+     * NOTES: The GET method requests a representation of the specified resource. Requests using GET should only retrieve data.
      * 
      * @param string $uri
      * @param object|callback $callback
@@ -482,6 +496,7 @@ class Route
 
     /**
      * Add new POST route
+     * NOTES: The POST method submits an entity to the specified resource, often causing a change in state or side effects on the server.
      * 
      * @param string $uri
      * @param object|callback $callback
@@ -489,6 +504,42 @@ class Route
     public static function post($uri, $callback)
     {
         return static::add('POST', $uri, $callback);
+    }
+
+    /**
+     * Add new PUT route
+     * NOTES: The PUT method replaces all current representations of the target resource with the request payload.
+     * 
+     * @param string $uri
+     * @param object|callback $callback
+     */
+    public static function put($uri, $callback)
+    {
+        return static::add('PUT', $uri, $callback);
+    }
+
+    /**
+     * Add new PATCH route
+     * NOTES: The PATCH method applies partial modifications to a resource.
+     * 
+     * @param string $uri
+     * @param object|callback $callback
+     */
+    public static function patch($uri, $callback)
+    {
+        return static::add('PATCH', $uri, $callback);
+    }
+
+    /**
+     * Add new DELETE route
+     * NOTES: The DELETE method deletes the specified resource.
+     * 
+     * @param string $uri
+     * @param object|callback $callback
+     */
+    public static function delete($uri, $callback)
+    {
+        return static::add('DELETE', $uri, $callback);
     }
 
     /**
@@ -501,6 +552,7 @@ class Route
     {
         return static::add('GET|POST', $uri, $callback);
     }
+
 
     /**
      * Set prefix for routing
@@ -729,7 +781,8 @@ class Route
         if(!is_array($callback) && strpos($callback,'@') !== false) {
             list($className, $method) = explode('@',$callback);
             
-            // Need to update this soon, so that the App\Http\Controllers can be Dynamnic.
+            // Right now the controllers is fixed under App\Http\Controllers folder
+            // We will need to update this soon, so that the App\Http\Controllers can be Dynamnic.
             $className = "App\Http\Controllers\\".$className;
 
             // if class is not found throw error
@@ -740,10 +793,11 @@ class Route
             $object = new $className();
 
             if(!method_exists($object, $method)) {
-                throw new \ReflectionException("The method ".$method." is not exists at ".$className);
+                throw new \ReflectionException("The class method ".$method." are not exists on ".$className);
             }
 
-            // Before calling the controller method we need to check/build what is the required parameters from that method.
+            // Before calling the controller method we need to check/build what is the 
+            // required parameters from that method.
             $params = static::buildMethodParameters($className, $method, $params);
             
             return call_user_func_array([$object, $method], $params);
@@ -771,7 +825,7 @@ class Route
                     // Trigger the method from $className and pass $params
                     return call_user_func_array([$object, $method], $params);
                 } else {
-                    throw new \ReflectionException("The method ".$method." is not exists at ".$className);    
+                    throw new \ReflectionException("The class method ".$method." are not exists on ".$className);    
                 }
             } else {
                 throw new \ReflectionException("Class ".$className." is not found.");
@@ -807,11 +861,12 @@ class Route
      */
     protected static function buildMethodParameters($className, $controllerMethod, $params = [])
     {
-        // dump($controllerMethod);
+
         // Create a reflection of the class
         $reflector = new ReflectionClass($className);
 
         $methods = $reflector->getMethods();
+
         
         foreach($methods as $method) {
 
@@ -820,37 +875,65 @@ class Route
                 // Parameters of Controller Method.
                 $methodParameters = $method->getParameters();
 
-                // inf the parameters is empty or null
+                // if the methodParameters is empty or null
                 if(!$methodParameters) {
                     return $params;
                 }
 
+
                 foreach($methodParameters as $dependency) {
                     
                     // $name = $dependency->name;
-
                     $position = $dependency->getPosition();
 
                     $type = $dependency->getType();
+
+                    // ignore this types for now.
+                    $typeList = [
+                        'array',
+                        'callable',
+                        'bool',
+                        'float',
+                        'int',
+                        'string',
+                        'iterable',
+                        'object',
+                        'mixed',
+                    ];
+
+                    // the type is declared, so we need to check it.
+                    if(in_array($type,$typeList)) {
+                        $params[$position] = $params[$position] ?? null;
+                        continue;
+                    }
+
+                    // type are not declared.
+                    if(!$type) {
+                        $params[$position] = $params[$position] ?? null;
+                        continue;
+                    }
                     
                     if(!is_null($type)) {
+                        
                         $class = $type->getName(); 
+
                        
                         // Emblaze Request and Response should always be automatically added to params. 
                         // this is a given params to controller method.
                         // if Emblaze\Http\Request 
                         // This is automatically injected,
-                        if($class === 'Emblaze\Http\Request') {
+                        if($class == 'Emblaze\Http\Request') {
+                            
                             $params[$position] = static::$request;
-
                             continue;
                         }
 
-                        if($class === 'Emblaze\Http\Response') {
+                        if($class == 'Emblaze\Http\Response') {
+                           
                             $params[$position] = static::$response;
-
                             continue;
                         }
+                       
 
                         // check if the $class is not yet added to your container,
                         if(!App::$app->get($class)) {
@@ -863,8 +946,10 @@ class Route
                         // set the resolve class instance to its controller method parameter position
                         $params[$position] = $resolveClass;
 
-                    }                    
+                    }  
+                                    
                 }
+                
                 
                 break;
             }
