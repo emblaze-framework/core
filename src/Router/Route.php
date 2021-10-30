@@ -907,7 +907,6 @@ class Route
             'object' => new stdClass(),
             'mixed' => 0, // any
         ];
-
         
         foreach($methods as $method) {
 
@@ -931,18 +930,16 @@ class Route
                     if(array_key_exists($dependency->name, $named_params)) {
                         $params[$position] = $named_params[$dependency->name];
                         continue;
-                        
                     } else {
-                        // the type is declared, so we need to check it.
-
+                        // The type is declared, so we need to check it.
                         if(array_key_exists(strval($type), $typeList)) {
                             // $params[$position] = $params[$position] ?? null;
                             // echo "TYPE DECLARED: ".$dependency->name;
                             $params[$position] = $typeList[strval($type)];
                             continue;
                         }
-
-                        // type are not declared.
+                        
+                        // Type are not declared.
                         if(!$type) {
                             // $params[$position] = $params[$position] ?? null;
                             // echo "TYPE NOT DECLARED: ".$dependency->name;
@@ -959,18 +956,15 @@ class Route
                             // if Emblaze\Http\Request 
                             // This is automatically injected,
                             if($class == 'Emblaze\Http\Request') {
-                                
                                 $params[$position] = static::$request;
                                 continue;
                             }
 
                             if($class == 'Emblaze\Http\Response') {
-                            
                                 $params[$position] = static::$response;
                                 continue;
                             }
                         
-
                             // check if the $class is not yet added to your container,
                             if(!App::$app->get($class)) {
                                 throw new \Exception('This '.$class.' is not yet added to your container, please bind it first.');
@@ -982,10 +976,9 @@ class Route
                             // set the resolve class instance to its controller method parameter position
                             $params[$position] = $resolveClass;
 
-                        }   
+                        }
+                        
                     }
-
-                     
                                     
                 }
                 
