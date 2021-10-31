@@ -505,24 +505,31 @@ class Database
      */
     private static function fetchExecute($fetch_type = 'fetchAll')
     {
-        static::query(static::$query);
+        try {
+            static::query(static::$query);
 
-        $query = trim(static::$query);
+            $query = trim(static::$query);
+    
+            $statement = static::prepare($query);
+          
+            // bind the data params using execute.
+            $statement->execute(static::$binding);
+            
+            // fetchAll
+            // You can customize this e.g. fetchObject(class_with_user_properties)
+            // Or e.g. fetchColumn()
+            $data = $statement->{$fetch_type}();
+            
+            // clear/reset properties
+            static::clear();
+           
+            return $data;
+        } catch (\Throwable $th) {
+            var_dump($th->getMessage());
+            return false;
+        }
 
-        $statement = static::prepare($query);
-      
-        // bind the data params using execute.
-        $statement->execute(static::$binding);
         
-        // fetchAll
-        // You can customize this e.g. fetchObject(class_with_user_properties)
-        // Or e.g. fetchColumn()
-        $data = $statement->{$fetch_type}();
-        
-        // clear/reset properties
-        static::clear();
-       
-        return $data;
     }
 
     /**
@@ -600,18 +607,25 @@ class Database
      */
     public static function insert($data)
     {
-        $table = static::$table;
-        $query = "INSERT INTO ".$table. " SET ";
-        static::execute($data, $query);
+        try {
+            $table = static::$table;
+            $query = "INSERT INTO ".$table. " SET ";
+            static::execute($data, $query);
 
-        // get last inserted Id
-        $object_id = static::$connection->lastInsertId();
+            // get last inserted Id
+            $object_id = static::$connection->lastInsertId();
 
-        // find that last inserted data using the object_id
-        $object = static::table($table)->where(static::$primary_id, '=', $object_id)->first();
+            // find that last inserted data using the object_id
+            $object = static::table($table)->where(static::$primary_id, '=', $object_id)->first();
 
-        // then return that newly inserted data.
-        return $object;
+            // then return that newly inserted data.
+            return $object;
+        } catch (\Throwable $th) {
+            var_dump($th->getMessage());
+            return false;
+        }
+
+        
     }
 
     /**
