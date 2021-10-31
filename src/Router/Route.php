@@ -865,11 +865,20 @@ class Route
         if(!is_array($callback) && class_exists($callback) !== false) {
             
             static::check_if_class_has_constructor($callback);
+
+            $className = $callback;
             
-            // Need to update this soon so that we can use a Dependency Injection here.
+            // Before calling the controller method we need to check/build what is the required parameters from that method.
+            $params = static::buildMethodParameters($className, $method='__construct', $params, $named_params);
+            
+            // Need to update this soon so that we can use a Dependency Injection here.(DONE!)
             // Notes: Class __construct() should be set to public.
             // This will triggered the __construct method of the Controller.
-            $newInstance = new $callback();
+
+            // $newInstance = new $callback($Xparams);
+
+            $reflect  = new ReflectionClass($className);
+            $instance = $reflect->newInstanceArgs($params);
             
         }
       
@@ -906,6 +915,8 @@ class Route
             'iterable' => [],
             'object' => new stdClass(),
             'mixed' => 0, // any
+            'Emblaze\Http\Request' => static::$request,
+            'Emblaze\Http\Response' => static::$response,
         ];
         
         foreach($methods as $method) {
@@ -926,16 +937,20 @@ class Route
                     $position = $dependency->getPosition();
 
                     $type = $dependency->getType();
+
+                    
                     
                     if(array_key_exists($dependency->name, $named_params)) {
                         $params[$position] = $named_params[$dependency->name];
                         continue;
                     } else {
+
                         // The type is declared, so we need to check it.
                         if(array_key_exists(strval($type), $typeList)) {
                             // $params[$position] = $params[$position] ?? null;
                             // echo "TYPE DECLARED: ".$dependency->name;
                             $params[$position] = $typeList[strval($type)];
+                            
                             continue;
                         }
                         
@@ -955,15 +970,15 @@ class Route
                             // this is a given params to controller method.
                             // if Emblaze\Http\Request 
                             // This is automatically injected,
-                            if($class == 'Emblaze\Http\Request') {
-                                $params[$position] = static::$request;
-                                continue;
-                            }
+                            // if($class == 'Emblaze\Http\Request') {
+                            //     $params[$position] = static::$request;
+                            //     continue;
+                            // }
 
-                            if($class == 'Emblaze\Http\Response') {
-                                $params[$position] = static::$response;
-                                continue;
-                            }
+                            // if($class == 'Emblaze\Http\Response') {
+                            //     $params[$position] = static::$response;
+                            //     continue;
+                            // }
                         
                             // check if the $class is not yet added to your container,
                             if(!App::$app->get($class)) {
