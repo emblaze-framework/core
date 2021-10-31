@@ -23,18 +23,18 @@ class Migration
         $pdo = Database::connection();
         
         // 1.) If the migrations table are not exists create it first.
-        $sql = "CREATE TABLE IF NOT EXISTS `". config('database.database'). "`.`migrations` (
-            `id` INT NOT NULL AUTO_INCREMENT ,  
+        $sql = "CREATE TABLE IF NOT EXISTS `". config('database.database'). "`.`migration` (
+            `migration_id` INT NOT NULL AUTO_INCREMENT ,  
             `migration` VARCHAR(255) NOT NULL ,  
             `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,    
-            PRIMARY KEY  (`id`)) ENGINE = InnoDB;";
+            PRIMARY KEY  (`migration_id`)) ENGINE = InnoDB;";
 
         // Execute the sql query
         $pdo->exec($sql);
 
 
         // 2.) Get the already applied migrations
-        $statement = $pdo->prepare("SELECT migration FROM migrations");
+        $statement = $pdo->prepare("SELECT migration FROM migration");
         $statement->execute();
         
         $appliedMigrations = $statement->fetchAll(\PDO::FETCH_COLUMN);
@@ -104,7 +104,7 @@ class Migration
             
             // lets insert the value,
             // this will insert all of the $str to `migration` 
-            $statement = $pdo->prepare("INSERT INTO `migrations` (`migration`) VALUES $str;");
+            $statement = $pdo->prepare("INSERT INTO `migration` (`migration`) VALUES $str;");
 
             // $newRecord = Database::table('users')->insert($data);
 
@@ -133,13 +133,13 @@ class Migration
        // First we need to check from migration table if there is a migrated data
        
        // Get the last migration data:
-       $statement = $pdo->prepare("SELECT * FROM `migrations` ORDER BY id DESC LIMIT 1");
+       $statement = $pdo->prepare("SELECT * FROM `migration` ORDER BY migration_id DESC LIMIT 1");
        $statement->execute();
 
        $lastMigrations = $statement->fetchAll(\PDO::FETCH_ASSOC);
        
        // Remove the row from that table.
-       $statement = $pdo->prepare("DELETE FROM `migrations` WHERE `migrations`.`id` = " . $lastMigrations[0]['id']);
+       $statement = $pdo->prepare("DELETE FROM `migration` WHERE `migration`.`migration_id` = " . $lastMigrations[0]['id']);
        $statement->execute();
 
        // Require the file migrations first before creating a new instance of this migration.

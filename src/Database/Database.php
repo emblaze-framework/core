@@ -13,7 +13,6 @@ use PDO;
 use Exception;
 use PDOException;
 use Emblaze\Url\Url;
-use Emblaze\File\File;
 use Emblaze\Http\Request;
 use Emblaze\Bootstrap\App;
 
@@ -49,6 +48,13 @@ class Database
      * @var string
      */
     protected static $table;
+
+    /**
+     * Primary ID name
+     * 
+     * @var string
+     */
+    protected static $primary_id;
     /**
      * Select data
      * 
@@ -121,9 +127,14 @@ class Database
       * Database constructor
       *
       * @param string $table
+      * @param string $primary_id
       */
-    private function __construct($table = null) {
+    private function __construct(
+        $table = '',
+        $primary_id = '') {
+
         static::$table = $table;
+        static::$primary_id = $primary_id;
     }
 
     /**
@@ -595,8 +606,10 @@ class Database
 
         // get last inserted Id
         $object_id = static::$connection->lastInsertId();
+
         // find that last inserted data using the object_id
-        $object = static::table($table)->where('id', '=', $object_id)->first();
+        $object = static::table($table)->where(static::$primary_id, '=', $object_id)->first();
+
         // then return that newly inserted data.
         return $object;
     }
@@ -753,6 +766,8 @@ class Database
         static::$binding = [];
         static::$instance = '';
         static::$setter = '';
+        // static::$table = '';
+        // static::$primary_id = '';
     }
 
 
