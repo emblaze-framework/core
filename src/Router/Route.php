@@ -94,6 +94,14 @@ class Route
     private static $middlewareIgnore = [];
 
     /**
+     * Constructor
+     * Do/Initialize or Ignore the __construct() of controller
+     *
+     * @var boolean
+     */
+    private static $ignore_constructor = false;
+
+    /**
      * Route constructor
      * 
      * @return void
@@ -782,6 +790,8 @@ class Route
     public static function invoke($route, $params = [], $named_params = [])
     {
 
+        
+
         // Check if the route is active
         if(!$route['active']) {
             // Need to update the view display of this error soon.
@@ -843,10 +853,21 @@ class Route
             if(class_exists($className)) {
                
                 // instantiate the Controller.
-                $object = new $className();
-                
-                if(method_exists($object, $method)) {
+                // $object = new $className();
 
+                $reflect  = new ReflectionClass($className);
+                // var_dump($reflect->getMethod($method));die();
+                
+                // if(method_exists($reflect, $method)) {
+                if($reflect->getMethod($method)) {
+
+                    if(static::$ignore_constructor) {
+                        // Notes: This will not trigger the __construct()
+                        $object = $reflect->newInstanceWithoutConstructor();
+                    } else {
+                        $object = new $className();
+                    }
+                    
                     // Before calling the controller method we need to check/build what is the required parameters from that method.
                     $params = static::buildMethodParameters($className, $method, $params, $named_params);
 
@@ -1118,6 +1139,16 @@ class Route
 
         // reset $middlewareIgnore
         static::$middlewareIgnore = [];
+    }
+
+    /**
+     * Ignore the Initialize method or __construct() method of a controller
+     *
+     * @return void
+     */
+    public function ignore_constructor()
+    {
+        static::$ignore_constructor = true;
     }
 
 }

@@ -522,7 +522,7 @@ class Database
             
             // clear/reset properties
             static::clear();
-           
+            
             return $data;
         } catch (\Throwable $th) {
             var_dump($th->getMessage());

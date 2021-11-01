@@ -27,6 +27,7 @@ class Session
             ini_set('session.use_only_cookies', 1);
             session_name(config('app.session_name'));
             session_start();
+            var_dump("session_start");
         }
     }
 
