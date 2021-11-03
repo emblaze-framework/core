@@ -123,21 +123,22 @@ if(! function_exists('previous')) {
 if(! function_exists('url')) {
     // Before Url::path($path);, now you can use url($path)
     /**
-     * Url path
+     * Url path e.g. user/login
+     * OR route name e.g. user.login.index
      * 
      * @param string $path
      * @return mixed
      */
-    function url($path) {
+    function url($path_or_routeName) {
         
-        if(array_key_exists($path, Emblaze\Router\Route::$routes)) {
+        if(array_key_exists($path_or_routeName, Emblaze\Router\Route::$routes)) {
             
-            $route = (object)Emblaze\Router\Route::$routes[$path];
+            $route = (object)Emblaze\Router\Route::$routes[$path_or_routeName];
           
             return Emblaze\Url\Url::path($route->uri);    
         }
 
-        return Emblaze\Url\Url::path($path);
+        return Emblaze\Url\Url::path($path_or_routeName);
 
     }
 }

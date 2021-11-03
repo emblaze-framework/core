@@ -11,5 +11,6 @@ namespace Emblaze\Http\Controllers;
 
 class BaseController
 {
-    
+    // middleware
+    public mixed $middleware;
 }

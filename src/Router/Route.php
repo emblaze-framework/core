@@ -94,14 +94,6 @@ class Route
     private static $middlewareIgnore = [];
 
     /**
-     * Constructor
-     * Do/Initialize or Ignore the __construct() of controller
-     *
-     * @var boolean
-     */
-    private static $ignore_constructor = false;
-
-    /**
      * Route constructor
      * 
      * @return void
@@ -155,6 +147,7 @@ class Route
                 'type' => $type,
                 'middleware' => static::$routeMiddlewares,
                 'middleware_ignore' => static::$middlewareIgnore,
+                'ignore_constructor' => false,
                 'active' => true,
                 'status' => 'Active',
                 'name' => static::$name
@@ -623,6 +616,8 @@ class Route
         // static::$routeMiddlewares = $parent_middleware;
         
         static::$routes[static::$name]['middleware'] = $parent_middleware;
+
+        return self::$route;
         
     }
 
@@ -712,74 +707,7 @@ class Route
         // throw new \Exception("This ".$uri. " route is not found. You should create a Route for this on /routes folder");
     }
 
-    /**
-     * Removing Some Global HTTP Middleware Stack
-     *
-     * @return mixed
-     */
-    private static function remove_some_global_http_middleware_stack($ignore = [])
-    {
-        $globalMiddleware = \App\Http\Core::$globalMiddleware;
-
-        // Check if ignore is not empty.
-        if(!empty($ignore)) {
-            foreach ($globalMiddleware as $key => $middleware) {
-                if(is_int($key)) {
-                    $class = new ReflectionClass($middleware);
-                    
-                    $full = $class->getName(); // e.g. App\Http\Middleware\PreventRequestsDuringMaintenance
-              
-                    $name = $class->getShortName(); // name of class e.g. PreventRequestsDuringMaintenance
-                    
-                    if(in_array($name, $ignore, true) || in_array($full, $ignore, true)) {
-                        // remove it to global http middleware stack.
-                        unset($globalMiddleware[$key]);
-                    }
-                    
-                } else
-                if(is_string($key)) {
-                    if(in_array($key , $ignore, true)) {
-                        // remove it to global http middleware stack.
-                        unset($globalMiddleware[$key]);
-                    }
-                }
-            }
-        }
-
-        return $globalMiddleware;
-    }
-
-    /**
-     * This will handle all middleware execution.
-     *
-     * @param mixed $route
-     * @return void
-     */
-    protected static function handle_execution_of_middleware($route = null)
-    {
-        /** Removing Some Global HTTP Middleware Stack */
-        $globalMiddleware = static::remove_some_global_http_middleware_stack($route['middleware_ignore']);
-        /** Removing Some Global HTTP Middleware Stack */
-
-        
-        /** 
-         * EXECUTE GLOBAL HTTP MIDDLEWARE STACK FIRST BEFORE TRIGGERING THE OTHER ROUTES MIDDLEWARE
-        */
-        // static::executeGlobalMiddleware_v2();
-        static::executeMiddlewareStack($globalMiddleware, static::$request);
-
-
-        /** 
-         * EXECUTE MIDDLEWARE GROUPS HERE:
-        */
-        static::executeMiddlewareStack(\App\Http\Core::$middlewareGroups[$route['type']], static::$request);
-
-        
-        /** 
-         * EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
-        */
-        static::executeRouteMiddleware($route, static::$request);
-    }
+    
 
     /**
      * Invoke the route
@@ -789,9 +717,6 @@ class Route
      */
     public static function invoke($route, $params = [], $named_params = [])
     {
-
-        
-
         // Check if the route is active
         if(!$route['active']) {
             // Need to update the view display of this error soon.
@@ -860,10 +785,11 @@ class Route
                 
                 // if(method_exists($reflect, $method)) {
                 if($reflect->getMethod($method)) {
-
-                    if(static::$ignore_constructor) {
+                    
+                    if($route['ignore_constructor']) {
                         // Notes: This will not trigger the __construct()
                         $object = $reflect->newInstanceWithoutConstructor();
+                       
                     } else {
                         $object = new $className();
                     }
@@ -1026,20 +952,160 @@ class Route
         return $params;
     }
 
+
+
+    /**
+     * Removing Some Global HTTP Middleware Stack
+     *
+     * @return mixed
+     */
+    // private static function remove_some_global_http_middleware_stack($ignore = [])
+    // {
+        
+    //     $globalMiddleware = \App\Http\Core::$globalMiddleware;
+
+    //     // Check if ignore is not empty.
+    //     if(!empty($ignore)) {
+    //         foreach ($globalMiddleware as $key => $middleware) {
+
+    //             // The key is indexed value (e.g. 0,1,2,3....)
+    //             if(is_int($key)) {
+    //                 $class = new ReflectionClass($middleware);
+                    
+    //                 // e.g. App\Http\Middleware\PreventRequestsDuringMaintenance
+    //                 $full = $class->getName(); 
+              
+    //                 // name of class e.g. PreventRequestsDuringMaintenance
+    //                 $name = $class->getShortName(); 
+                    
+    //                 if(in_array($name, $ignore, true) || in_array($full, $ignore, true)) {
+    //                     // Remove it to global http middleware stack.
+    //                     unset($globalMiddleware[$key]);
+    //                 }
+                    
+    //             } else if(is_string($key)) {
+    //                 // The key is string, means it named (e.g. 'HelloWorld' => \App\Http\Middleware\HelloWorld::class )
+
+    //                 if(in_array($key , $ignore, true)) {
+    //                     // Remove it to global http middleware stack.
+    //                     unset($globalMiddleware[$key]);
+                        
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     return $globalMiddleware;
+    // }
+
+    /**
+     * Removing Some Global, Groups HTTP Middleware Stack
+     *
+     * @return mixed
+     */
+    private static function remove_some_http_middleware_stack($route, $middlewareTypes='global')
+    {
+        if ($middlewareTypes == 'global') {
+            $middlewareList = \App\Http\Core::$globalMiddleware;
+        }
+        if ($middlewareTypes == 'groups') {
+            $middlewareList = \App\Http\Core::$middlewareGroups[$route['type']];
+        }
+        
+        $ignore = $route['middleware_ignore'];
+
+        // Check if ignore is not empty.
+        if(!empty($ignore)) {
+            foreach ($middlewareList as $key => $middleware) {
+
+                // The key is indexed value (e.g. 0,1,2,3....)
+                if(is_int($key)) {
+                    $class = new ReflectionClass($middleware);
+                    
+                    // e.g. App\Http\Middleware\PreventRequestsDuringMaintenance
+                    $full = $class->getName(); 
+              
+                    // name of class e.g. PreventRequestsDuringMaintenance
+                    $name = $class->getShortName(); 
+                    
+                    if(in_array($name, $ignore, true) || in_array($full, $ignore, true)) {
+                        // Remove it to global http middleware stack.
+                        unset($middlewareList[$key]);
+                    }
+                    
+                } else if(is_string($key)) {
+                    // The key is string, means it named (e.g. 'HelloWorld' => \App\Http\Middleware\HelloWorld::class )
+
+                    if(in_array($key , $ignore, true)) {
+                        // Remove it to global http middleware stack.
+                        unset($middlewareList[$key]);
+                        
+                    }
+                }
+            }
+        }
+
+        return $middlewareList;
+    }
+
+    /**
+     * This will handle all middleware execution.
+     *
+     * @param mixed $route
+     * @return void
+     */
+    protected static function handle_execution_of_middleware(mixed $route)
+    {
+
+        /** Removing Some Global HTTP Middleware Stack */
+        $globalMiddleware = static::remove_some_http_middleware_stack($route);
+
+        // static::executeGlobalMiddleware_v2();
+        // EXECUTE GLOBAL HTTP MIDDLEWARE STACK FIRST BEFORE TRIGGERING THE OTHER ROUTES MIDDLEWARE
+        static::executeMiddlewareStack(
+            $globalMiddleware, 
+            static::$request
+        );
+
+        // Removing Some Groups HTTP Middleware Stack
+        $groupsMiddleware = static::remove_some_http_middleware_stack($route, 'groups');
+
+        // EXECUTE MIDDLEWARE GROUPS HERE:
+        static::executeMiddlewareStack(
+            // \App\Http\Core::$middlewareGroups[$route['type']], 
+            $groupsMiddleware, 
+            static::$request
+        );
+
+        
+        // EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
+        // static::executeRouteMiddleware(
+        //     $route, 
+        //     static::$request
+        // );
+    }
+
     /**
      * Execute routes middleware
      * 
      * @param Request $request
-     * @param array $routes
+     * @param mixed $routes
      */
-    protected static function executeRouteMiddleware($route = [])
+    protected static function executeRouteMiddleware(mixed $route)
     {
         $middlewareNames = explode('|',$route['middleware']);
 
         $newMiddlewareStack = [];
         
         foreach($middlewareNames as $middleware) {
+            
             if($middleware != '') {
+
+                // // if class ba sya.
+                // if(class_exists($middleware)) {
+                //     // add the route middleware on newMiddlewareStack
+                //     $newMiddlewareStack[] = $middleware;
+                // }
 
                 $middleware = 'App\Http\Middleware\\'.$middleware;
 
@@ -1073,6 +1139,7 @@ class Route
       */
     protected static function executeMiddlewareStack($middlewares = [])
     {
+
         // Get list of global middleware stack from \App\Http\Core;
         // $middlewares = \App\Http\Core::$globalMiddleware;
 
@@ -1116,7 +1183,7 @@ class Route
      * @param mixed $middlewares
      * @return void
      */
-    public function middleware_ignore($middlewares = null)
+    public function middleware_ignore(mixed $middlewares)
     {
        
         if(is_array($middlewares)) {
@@ -1124,31 +1191,33 @@ class Route
                 static::$middlewareIgnore[] = $middleware;
             }
             
-        } else 
-        if(is_string($middlewares)) {
+        } else if(is_string($middlewares)) {
             static::$middlewareIgnore[] = $middlewares;
-        }  else 
-        if(class_exists($middlewares)) {
+            
+        }  else if(class_exists($middlewares)) {
             static::$middlewareIgnore[] = $middlewares;
         }
 
-        // remove duplicated value.
+        // Remove duplicated value.
         $val = array_unique(static::$middlewareIgnore);
         
         static::$routes[static::$name]['middleware_ignore'] = $val;
 
-        // reset $middlewareIgnore
+        // Reset $middlewareIgnore
         static::$middlewareIgnore = [];
+
+        return self::$route;
     }
 
     /**
      * Ignore the Initialize method or __construct() method of a controller
      *
-     * @return void
+     * @return 
      */
     public function ignore_constructor()
     {
-        static::$ignore_constructor = true;
+        static::$routes[static::$name]['ignore_constructor'] = true;
+        return self::$route;
     }
 
 }
