@@ -741,31 +741,31 @@ class Route
         // String callback Seperated with @ symbol.
         // use e.g. SiteController@index
         // like: Route::get('/home',SiteController@index)
-        if(!is_array($callback) && strpos($callback,'@') !== false) {
-            list($className, $method) = explode('@',$callback);
+        // if(!is_array($callback) && strpos($callback,'@') !== false) {
+        //     list($className, $method) = explode('@',$callback);
             
-            // Right now the controllers is fixed under App\Http\Controllers folder
-            // We will need to update this soon, so that the App\Http\Controllers can be Dynamnic.
-            $className = "App\Http\Controllers\\".$className;
+        //     // Right now the controllers is fixed under App\Http\Controllers folder
+        //     // We will need to update this soon, so that the App\Http\Controllers can be Dynamnic.
+        //     $className = "App\Http\Controllers\\".$className;
 
-            // if class is not found throw error
-            if(!class_exists($className)) { 
-                throw new \ReflectionException("class ".$className." is not found.");
-            }
+        //     // if class is not found throw error
+        //     if(!class_exists($className)) { 
+        //         throw new \ReflectionException("class ".$className." is not found.");
+        //     }
         
-            $object = new $className();
+        //     $object = new $className();
 
-            if(!method_exists($object, $method)) {
-                throw new \ReflectionException("The class method ".$method." are not exists on ".$className);
-            }
+        //     if(!method_exists($object, $method)) {
+        //         throw new \ReflectionException("The class method ".$method." are not exists on ".$className);
+        //     }
 
-            // Before calling the controller method we need to check/build what is the 
-            // required parameters from that method.
-            $params = static::buildMethodParameters($className, $method, $params, $named_params);
+        //     // Before calling the controller method we need to check/build what is the 
+        //     // required parameters from that method.
+        //     $params = static::buildMethodParameters($className, $method, $params, $named_params);
             
-            return call_user_func_array([$object, $method], $params);
+        //     return call_user_func_array([$object, $method], $params);
 
-        }
+        // }
 
         // OR: Array [ControllerClassName, ControllerMethod]
         // use e.g. [SiteController::class, 'method']
@@ -781,22 +781,51 @@ class Route
                 // $object = new $className();
 
                 $reflect  = new ReflectionClass($className);
-                // var_dump($reflect->getMethod($method));die();
+
+                
                 
                 // if(method_exists($reflect, $method)) {
                 if($reflect->getMethod($method)) {
-                    
-                    if($route['ignore_constructor']) {
-                        // Notes: This will not trigger the __construct()
-                        $object = $reflect->newInstanceWithoutConstructor();
-                       
-                    } else {
-                        $object = new $className();
-                    }
-                    
                     // Before calling the controller method we need to check/build what is the required parameters from that method.
                     $params = static::buildMethodParameters($className, $method, $params, $named_params);
+                    
+                    if($route['ignore_constructor']) {
+                        /**
+                         * Before creating the controller object, 
+                         * lets check if there is a custom middleware & ignore_middleware
+                         */
 
+                        // Notes: This will not trigger the __construct()
+                        $object = $reflect->newInstanceWithoutConstructor();
+                    } else {
+                        
+                        $reflect  = new ReflectionClass($className);
+                        $object = $reflect->newInstanceArgs($params);
+                        // $object = new $className($params);
+
+                        $m = $reflect->getProperty('middleware');
+                        // $m->setAccessible(true); // <--- you set the property to public before you read the value
+                        
+                        // middlewares came from controller __construct() method
+                        $middleware = $m->getValue($object);
+
+                        $route['middleware'] = ""; // reset the route middleware
+                        foreach ($middleware as $value) {
+                            $route['middleware'] .= '|'.$value;
+                        }
+                        
+                        // Execute middleware.
+                        // This will handle the execution of middleware
+                        // static::handle_execution_of_middleware($route);
+                        
+                        // EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
+                        static::executeRouteMiddleware(
+                            $route, 
+                            static::$request
+                        );
+                        
+                    }
+                    
                     // Trigger the method from $className and pass $params
                     return call_user_func_array([$object, $method], $params);
                 } else {
@@ -1095,11 +1124,32 @@ class Route
     {
         $middlewareNames = explode('|',$route['middleware']);
 
+
         $newMiddlewareStack = [];
         
-        foreach($middlewareNames as $middleware) {
+        foreach($middlewareNames as $name) {
             
-            if($middleware != '') {
+            if($name != '') {
+                // the name is already "classname"
+                if(class_exists($name)) { 
+                    $newMiddlewareStack[] = $name;
+                    continue;
+                }
+
+
+                foreach(\App\Http\Core::$routeMiddleware as $key => $class) {
+                    $key = strtolower($key);
+                    $name = strtolower($name);
+                    if($key == $name) {
+                        if(!class_exists($class)) { 
+                            throw new \ReflectionException("class ".$class." does not exists.");
+                        }
+                        // add the route middleware on newMiddlewareStack
+                        $newMiddlewareStack[] = $class;
+                        continue;
+                        
+                    }
+                }
 
                 // // if class ba sya.
                 // if(class_exists($middleware)) {
@@ -1107,19 +1157,19 @@ class Route
                 //     $newMiddlewareStack[] = $middleware;
                 // }
 
-                $middleware = 'App\Http\Middleware\\'.$middleware;
+                // $middleware = 'App\Http\Middleware\\'.$middleware;
 
-                if(class_exists($middleware)) {
-                    // $object = new $middleware;
+                // if(class_exists($name)) {
+                //     // $object = new $middleware;
 
-                    // add the route middleware on newMiddlewareStack
-                    $newMiddlewareStack[] = $middleware;
-                    // trigger the handle method from Middleware
-                    // call_user_func_array([$object, 'handle'],[]);
+                //     // add the route middleware on newMiddlewareStack
+                //     $newMiddlewareStack[] = $name;
+                //     // trigger the handle method from Middleware
+                //     // call_user_func_array([$object, 'handle'],[]);
                     
-                } else {
-                    throw new \ReflectionException("class ".$middleware." does not exists.");
-                }
+                // } else {
+                //     throw new \ReflectionException("class ".$name." does not exists.");
+                // }
             }
         }
 
