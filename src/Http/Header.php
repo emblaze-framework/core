@@ -31,4 +31,21 @@ class Header
     }
 
 
+    /**
+     * This will return the authorization header
+     *
+     * @return mixed
+     */
+    public static function get_authorization_header()
+    {
+        foreach (getallheaders() as $name => $value) {
+            if($name == 'Authorization') {
+                return $value;
+            }
+        }
+
+        return false;
+    }
+
+
 }

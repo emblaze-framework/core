@@ -1108,10 +1108,10 @@ class Route
 
         
         // EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
-        // static::executeRouteMiddleware(
-        //     $route, 
-        //     static::$request
-        // );
+        static::executeRouteMiddleware(
+            $route, 
+            static::$request
+        );
     }
 
     /**
@@ -1231,7 +1231,7 @@ class Route
      * Add ignore from $middlewareIgnore
      *
      * @param mixed $middlewares
-     * @return void
+     * @return mixed
      */
     public function middleware_ignore(mixed $middlewares)
     {

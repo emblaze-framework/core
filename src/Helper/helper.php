@@ -139,7 +139,6 @@ if(! function_exists('url')) {
         }
 
         return Emblaze\Url\Url::path($path_or_routeName);
-
     }
 }
 
