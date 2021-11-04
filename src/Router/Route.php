@@ -795,6 +795,7 @@ class Route
 
                         // Notes: This will not trigger the __construct()
                         $object = $reflect->newInstanceWithoutConstructor();
+                        
                     } else {
                         
                         $reflect  = new ReflectionClass($className);
@@ -807,10 +808,12 @@ class Route
                         // middlewares came from controller __construct() method
                         $middleware = $m->getValue($object);
 
+
                         $route['middleware'] = ""; // reset the route middleware
                         foreach ($middleware as $value) {
                             $route['middleware'] .= '|'.$value;
                         }
+
                         
                         // Execute middleware.
                         // This will handle the execution of middleware
@@ -1150,10 +1153,10 @@ class Route
      * @param Request $request
      * @param mixed $routes
      */
-    protected static function executeRouteMiddleware(mixed $route)
+    protected static function executeRouteMiddleware(mixed $route = null)
     {
-        $middlewareNames = explode('|',$route['middleware']);
 
+        $middlewareNames = explode('|',$route['middleware']);
 
         $newMiddlewareStack = [];
         
