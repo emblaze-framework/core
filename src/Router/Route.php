@@ -781,8 +781,6 @@ class Route
                 // $object = new $className();
 
                 $reflect  = new ReflectionClass($className);
-
-                
                 
                 // if(method_exists($reflect, $method)) {
                 if($reflect->getMethod($method)) {
@@ -921,7 +919,16 @@ class Route
         
         foreach($methods as $method) {
 
-            if($method->name === $controllerMethod) {
+            // if method is __construct()
+            // if($method->name == "__construct") {
+            //     // Parameters of Controller Method.
+            //     $methodParameters = $method->getParameters();    
+            // }
+
+
+            // This will also get and build the __construct(args) method args.
+            // !Important Notes: The parameters or params that will pass by the users are also be included on the __construct() args.
+            if($method->name === $controllerMethod || $method->name == "__construct") {
                 
                 // Parameters of Controller Method.
                 $methodParameters = $method->getParameters();
@@ -950,7 +957,6 @@ class Route
                             // $params[$position] = $params[$position] ?? null;
                             // echo "TYPE DECLARED: ".$dependency->name;
                             $params[$position] = $typeList[strval($type)];
-                            
                             continue;
                         }
                         
