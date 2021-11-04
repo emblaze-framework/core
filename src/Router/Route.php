@@ -93,6 +93,14 @@ class Route
      */
     private static $middlewareIgnore = [];
 
+
+    /**
+     * __construct args
+     *
+     * @var array
+     */
+    private static $constructor_args = [];
+
     /**
      * Route constructor
      * 
@@ -799,7 +807,8 @@ class Route
                     } else {
                         
                         $reflect  = new ReflectionClass($className);
-                        $object = $reflect->newInstanceArgs($params);
+                        
+                        $object = $reflect->newInstanceArgs(static::$constructor_args);
                         // $object = new $className($params);
 
                         $m = $reflect->getProperty('middleware');
@@ -829,6 +838,7 @@ class Route
                     
                     // Trigger the method from $className and pass $params
                     return call_user_func_array([$object, $method], $params);
+                    
                 } else {
                     throw new \ReflectionException("The class method ".$method." are not exists on ".$className);    
                 }
@@ -923,19 +933,85 @@ class Route
         foreach($methods as $method) {
 
             // if method is __construct()
-            // if($method->name == "__construct") {
-            //     // Parameters of Controller Method.
-            //     $methodParameters = $method->getParameters();    
-            // }
-
-
             // This will also get and build the __construct(args) method args.
             // !Important Notes: The parameters or params that will pass by the users are also be included on the __construct() args.
-            if($method->name === $controllerMethod || $method->name == "__construct") {
+            if($method->name == "__construct") {
+                // Parameters of Controller Method.
+                $methodParameters = $method->getParameters();  
+                
+                foreach($methodParameters as $dependency) { 
+                    // $name = $dependency->name;
+                    $position = $dependency->getPosition();
+
+                    $type = $dependency->getType();
+
+                    if(array_key_exists($dependency->name, $named_params)) {
+                        $params[$position] = $named_params[$dependency->name];
+                        continue;
+                    } else { 
+                        // The type is declared, so we need to check it.
+                        if(array_key_exists(strval($type), $typeList)) {
+                            // $params[$position] = $params[$position] ?? null;
+                            // echo "TYPE DECLARED: ".$dependency->name;
+                            $params[$position] = $typeList[strval($type)];
+                            continue;
+                        }
+                        
+                        // Type are not declared.
+                        if(!$type) {
+                            // $params[$position] = $params[$position] ?? null;
+                            // echo "TYPE NOT DECLARED: ".$dependency->name;
+                            $params[$position] = null;
+                            continue;
+                        }
+                        
+                        if(!is_null($type)) {
+                            
+                            $class = $type->getName(); 
+
+                            // Emblaze Request and Response should always be automatically added to params. 
+                            // this is a given params to controller method.
+                            // if Emblaze\Http\Request 
+                            // This is automatically injected,
+                            // if($class == 'Emblaze\Http\Request') {
+                            //     $params[$position] = static::$request;
+                            //     continue;
+                            // }
+
+                            // if($class == 'Emblaze\Http\Response') {
+                            //     $params[$position] = static::$response;
+                            //     continue;
+                            // }
+                        
+                            // check if the $class is not yet added to your container,
+                            if(!App::$app->get($class)) {
+                                throw new \Exception('This '.$class.' is not yet added to your container, please bind it first.');
+                            }
+
+                            // resolve the class and get the instance.
+                            $resolveClass = App::$app->resolve($class);
+                            
+                            // set the resolve class instance to its controller method parameter position
+                            $params[$position] = $resolveClass;
+
+                        }
+                        
+                    }
+                    
+                    
+                }
+
+                static::$constructor_args = $params;
+                 
+            }
+
+
+            
+            if($method->name == $controllerMethod) {
                 
                 // Parameters of Controller Method.
                 $methodParameters = $method->getParameters();
-
+                
                 // if the methodParameters is empty or null
                 if(!$methodParameters) {
                     return $params;
@@ -1006,8 +1082,7 @@ class Route
                                     
                 }
                 
-                
-                break;
+                // break;
             }
         }
         
