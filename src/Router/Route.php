@@ -838,25 +838,49 @@ class Route
 
         // OR: Direct Class Name
         // use e.g. SiteController::class
-        if(!is_array($callback) && class_exists($callback) !== false) {
+        // if(!is_array($callback) && class_exists($callback) !== false) {
             
-            static::check_if_class_has_constructor($callback);
+        //     static::check_if_class_has_constructor($callback);
 
-            $className = $callback;
+        //     $className = $callback;
             
-            // Before calling the controller method we need to check/build what is the required parameters from that method.
-            $params = static::buildMethodParameters($className, $method='__construct', $params, $named_params);
+        //     // Before calling the controller method we need to check/build what is the required parameters from that method.
+        //     $params = static::buildMethodParameters($className, $method='__construct', $params, $named_params);
             
-            // Need to update this soon so that we can use a Dependency Injection here.(DONE!)
-            // Notes: Class __construct() should be set to public.
-            // This will triggered the __construct method of the Controller.
+        //     // Need to update this soon so that we can use a Dependency Injection here.(DONE!)
+        //     // Notes: Class __construct() should be set to public.
+        //     // This will triggered the __construct method of the Controller.
 
-            // $newInstance = new $callback($Xparams);
+        //     // $newInstance = new $callback($Xparams);
 
-            $reflect  = new ReflectionClass($className);
-            $instance = $reflect->newInstanceArgs($params);
+        //     // Trigger middleware if exists
+        //     $reflect  = new ReflectionClass($className);
+
+        //     $object = $reflect->newInstanceArgs($params);
+        //     // $object = $reflect->newInstanceWithoutConstructor();
+
+        //     // echo "Hello World!";die();
+
+        //     $m = $reflect->getProperty('middleware');
+        //     $middleware = $m->getValue($object);
+
+        //     $route['middleware'] = ""; // reset the route middleware
+        //     foreach ($middleware as $value) {
+        //         $route['middleware'] .= '|'.$value;
+        //     }
             
-        }
+        //     // Execute middleware.
+            
+        //     // EXECUTE ROUTE MIDDLEWARE FIRST BEFORE CALLING CONTROLLER CALLBACK
+        //     static::executeRouteMiddleware(
+        //         $route, 
+        //         static::$request
+        //     );
+
+        //     // $reflect  = new ReflectionClass($className);
+        //     // $instance = $reflect->newInstanceArgs($params);
+            
+        // }
       
     }
     
@@ -1206,7 +1230,8 @@ class Route
                 // add new middleware stack
                 $mwStack->add(new $middleware());
             } else {
-                throw new \ReflectionException("class ".$middleware." does not exists.");
+                // \App\Http\Middleware\HelloWorld::class
+                throw new \ReflectionException("Class ".$middleware."::class does not exists. Check your middleware stack on Core.php");
             }
         }
         
