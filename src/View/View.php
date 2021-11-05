@@ -24,8 +24,6 @@ class View
 
     public static function render($path, $data = [])
     {
-
-
         /**
          * flash errors that came from Emblaze\Validation\Validate
          */
@@ -39,9 +37,7 @@ class View
         // return static::bladeRender($path, $data);
 
         // OR Render using our custom Render
-        return static::viewRender($path, $data);
-
-        
+        return static::viewRender($path, $data);   
     }
 
     /**
@@ -84,7 +80,7 @@ class View
         }
 
         ob_start(); // start buffer
-        extract($data); //-> this will include $data extract to view files.
+        extract($data); //-> this will include $data extracted to view files.
         include File::path($path);
         $content = ob_get_contents();
         ob_end_clean(); // clean buffer
