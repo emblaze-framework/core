@@ -110,8 +110,8 @@ class File
             //-> "routes/api.php" file OR "routes/emblaze" directory
             $file_path = $path . static::ds() . $file; 
 
-            //-> "/Users/reymarkdivino/Desktop/PHP-MVC/emblaze/emblaze/routes/api.php" file OR 
-            // "/Users/reymarkdivino/Desktop/PHP-MVC/emblaze/emblaze/routes/emblaze" directory
+            //-> "/Users/<User>/Desktop/PHP-MVC/emblaze/emblaze/routes/api.php" file OR 
+            // "/Users/<User>/Desktop/PHP-MVC/emblaze/emblaze/routes/emblaze" directory
             $full_file_path = ROOT. static::ds() . $file_path; 
             
             // Checking whether a file is directory or not
