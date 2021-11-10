@@ -573,29 +573,34 @@ class Database
      */
     private static function execute(array $data, $query, $where = null)
     {
-        static::instance();
-        if(! static::$table) {
-            throw new Exception("Unknown table");
+        try {
+            static::instance();
+            if(! static::$table) {
+                throw new Exception("Unknown table");
+            }
+
+            foreach($data as $key => $value) {
+                static::$setter .= '`'.$key.'` = ?, ';
+                static::$binding[] = filter_var($value, FILTER_SANITIZE_STRING);
+            }
+            static::$setter = trim(static::$setter, ', ');
+
+            $query .= static::$setter;
+            $query .= $where != null ? static::$where." " : '';
+
+            static::$binding = $where != null ? array_merge(static::$binding, static::$where_binding) : static::$binding;
+            
+            $statement = static::prepare($query);
+            
+            $statement->execute(static::$binding);
+
+            $statement->closeCursor();
+            
+            static::clear();
+        } catch (\Throwable $th) {
+            throw $th;
         }
-
-        foreach($data as $key => $value) {
-            static::$setter .= '`'.$key.'` = ?, ';
-            static::$binding[] = filter_var($value, FILTER_SANITIZE_STRING);
-        }
-        static::$setter = trim(static::$setter, ', ');
-
-        $query .= static::$setter;
-        $query .= $where != null ? static::$where." " : '';
-
-        static::$binding = $where != null ? array_merge(static::$binding, static::$where_binding) : static::$binding;
         
-        $statement = static::prepare($query);
-        
-        $statement->execute(static::$binding);
-
-        $statement->closeCursor();
-        
-        static::clear();
     }
 
     /**
