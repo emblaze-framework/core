@@ -16,7 +16,8 @@
     "jenssegers/blade": "^1.4",
     "rakit/validation": "^1.4",
     "symfony/http-foundation": "^5.3.2",
-    "vlucas/phpdotenv": "^5.3"
+    "vlucas/phpdotenv": "^5.3",
+    "phpmailer/phpmailer": "^6.5"
   },
   "autoload": {
     "psr-4": {
