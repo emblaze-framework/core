@@ -142,7 +142,7 @@ class Database
      */
     private static function connect()
     {
-        if(! static::$connection) {
+        if(!static::$connection) {
             
             // Get database config file
             // $database_config = File::require_file('config/database.php');
@@ -150,14 +150,19 @@ class Database
             // extract() will convert the associative array names to be variable names with there value.
             // e.g. 'host'=>'127.0.0.1' will be $host = '127.0.0.1'
             
-            extract(App::$app->config['database']);
+            // for App run here
+            // need to fix this. this config should be also work on webscoket data manipulation.
+            // extract(App::$app->config['database']);
 
-            // $driver = '';
-            // $host = '';
-            // $port = '';
-            // $database = '';
-            // $username = '';
-            // $password = '';
+            // for websocket, direct details.
+            $driver = 'mysql';
+            $host = '127.0.0.1';
+            $port = '3306';
+            $database = 'emblaze';
+            $username = 'root';
+            $password = '';
+            $charset = 'utf8';
+            $collation = 'utf8_general_ci';
 
             // dsn setting
             $dsn = $driver.":host=".$host.";port=".$port.";dbname=".$database;

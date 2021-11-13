@@ -74,6 +74,7 @@ class App extends Container
 
         // Initialize Config
         $this->config = Config::getall();
+        
 
         // Register Whoops
         // config('app.whoops_enabled') ? Whoops::handle() : null;
@@ -81,9 +82,8 @@ class App extends Container
         // Initialize Whoops if debug is set to TRUE
         config('app.debug') ? Whoops::handle() : null;
         
-
         // Instantiate Cookie CsrfToken
-        new \Emblaze\Cookie\CsrfToken();
+        // new \Emblaze\Cookie\CsrfToken();
 
         // Instantiate providers
         $this->provider = new Provider();
