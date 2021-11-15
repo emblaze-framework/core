@@ -137,6 +137,8 @@ class Database
         static::$primary_id = $primary_id;
     }
 
+    
+
     /**
      * Connect to database
      */
@@ -288,6 +290,19 @@ class Database
     public static function table($table)
     {
         static::$table = $table;
+        return static::instance();
+    }
+
+    /**
+     * Define primary id
+     * 
+     * @param string $primary_id
+     * 
+     * @return object $instance
+     */
+    public static function primary_id($primary_id)
+    {
+        static::$primary_id = $primary_id;
         return static::instance();
     }
 
