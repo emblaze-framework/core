@@ -633,15 +633,14 @@ class Database
     public static function insert($data)
     {
         try {
-            $table = static::$table;
-            $query = "INSERT INTO ".$table. " SET ";
+            $query = "INSERT INTO ".static::$table. " SET ";
             static::execute($data, $query);
 
             // get last inserted Id
             $object_id = static::$connection->lastInsertId();
 
             // find that last inserted data using the object_id
-            $object = static::table($table)->where(static::$primary_id, '=', $object_id)->first();
+            $object = static::table(static::$table)->where(static::$primary_id, '=', $object_id)->first();
 
             // then return that newly inserted data.
             return $object;
@@ -649,8 +648,6 @@ class Database
             var_dump($th->getMessage());
             return false;
         }
-
-        
     }
 
     /**
