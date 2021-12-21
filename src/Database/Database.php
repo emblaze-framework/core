@@ -590,6 +590,8 @@ class Database
      * @param array $data
      * @param string $query
      * @param bool $where
+     * 
+     * @return mixed
      */
     private static function execute(array $data, $query, $where = null)
     {
@@ -601,7 +603,8 @@ class Database
 
             foreach($data as $key => $value) {
                 static::$setter .= '`'.$key.'` = ?, ';
-                static::$binding[] = filter_var($value, FILTER_SANITIZE_STRING);
+                // static::$binding[] = filter_var($value, FILTER_SANITIZE_STRING);
+                static::$binding[] = $value;
             }
             static::$setter = trim(static::$setter, ', ');
 
@@ -617,33 +620,38 @@ class Database
             $statement->closeCursor();
             
             static::clear();
+            return true;
+            
         } catch (\Throwable $th) {
             throw $th;
+            return false;
         }
         
     }
 
     /**
-     * Insert to table
+     * Insert to table, will return lastInsertId
      * 
      * @param array $data
      * 
-     * @return object
+     * @return mixed
      */
     public static function insert($data)
     {
         try {
             $query = "INSERT INTO ".static::$table. " SET ";
+            
             static::execute($data, $query);
 
             // get last inserted Id
             $object_id = static::$connection->lastInsertId();
 
             // find that last inserted data using the object_id
-            $object = static::table(static::$table)->where(static::$primary_id, '=', $object_id)->first();
+            // $object = static::table(static::$table)->where(static::$primary_id, '=', $object_id)->first();
 
             // then return that newly inserted data.
-            return $object;
+            // return $object;
+            return $object_id;
         } catch (\Throwable $th) {
             var_dump($th->getMessage());
             return false;
@@ -660,9 +668,8 @@ class Database
     public static function update($data)
     {
         $query = "UPDATE ". static::$table." SET ";
-        static::execute($data, $query, true);
-
-        return true;
+        
+        return static::execute($data, $query, true);
     }
 
     /**
@@ -675,9 +682,8 @@ class Database
     public static function delete()
     {
         $query = "DELETE FROM ". static::$table." ";
-        static::execute([], $query, true);
-
-        return true;
+        
+        return static::execute([], $query, true);
     }
 
     /**

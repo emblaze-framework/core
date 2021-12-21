@@ -105,9 +105,6 @@ class Request
      */
     public static function handle()
     {   
-        
-       
-
         // "SCRIPT_NAME" => "/public/index.php"
         static::$script_name = str_replace('\\','',dirname(Server::get('SCRIPT_NAME')));
      

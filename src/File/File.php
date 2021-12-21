@@ -103,8 +103,6 @@ class File
         // array_diff will exclude the '.', and '..' on array.
         $files = array_diff(scandir(static::path($path)),['.','..']);
 
-        // vd(static::path($path));
-
         foreach ($files as $file) {
 
             //-> "routes/api.php" file OR "routes/emblaze" directory
